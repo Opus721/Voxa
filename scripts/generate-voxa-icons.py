@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""Rasterize the Voxa mark into the icon files Tauri and the tray expect.
+"""Build the Voxa icon files from one 1024px raster.
 
-The master is src/assets/voxa-mark.svg: the italic V from Libre Bodoni,
-weight 600, outlined so generation does not need the font.
-
-Every size, including the tray and the 16px exe frame, uses the medium
-bleed: the letter is scaled about 20% past the left and bottom of a
-#09090a rounded square, matching design/voxa-mark-bodoni-bleed-2.svg.
-There is no fitted-letter variant.
+The master is design/voxa-mark-bodoni-bleed-2.png: the Libre Bodoni italic
+V, weight 600, medium bleed, white on #09090a. It matches a single
+render of src/assets/voxa-mark.svg at 1024. Every smaller file is a
+LANCZOS downscale of that image (halved until the next power of two,
+then LANCZOS to the exact size). Nothing is redrawn per size.
 """
 
 from __future__ import annotations
@@ -24,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ICONS = ROOT / "src-tauri" / "icons"
 RES = ROOT / "src-tauri" / "resources"
 MARK = ROOT / "src" / "assets" / "voxa-mark.svg"
+MASTER_PNG = ROOT / "design" / "voxa-mark-bodoni-bleed-2.png"
 
 WHITE = (255, 255, 255, 255)
 ACCENT = (94, 106, 210, 255)
@@ -34,7 +33,10 @@ TILE = (9, 9, 10, 255)
 BLEED_SCALE = 1.54151
 BLEED_TX = -204.80
 BLEED_TY = 48.00
-ICO_SIZES = [16, 20, 24, 32, 40, 48, 64, 256]
+ICO_SIZES = [16, 20, 24, 32, 40, 48, 64, 96, 128, 256]
+# A redrawn polygon at 32px is ~40 RMSE from a LANCZOS of the master.
+# Halving stays near 3. Anything above this means a size was repainted.
+LANCZOS_RMSE_LIMIT = 6.0
 
 
 def _tokenize(d: str) -> list[tuple[str, list[float]]]:
@@ -149,24 +151,98 @@ def bleed_contours(contours, size: int):
     return _map_points(contours, lambda x, y: (x * scale + tx, y * scale + ty))
 
 
-def render(size: int, *, color, badge=None) -> Image.Image:
+def render_master() -> Image.Image:
+    """The one polygon paint: 1024px. Smaller sizes never call this."""
+    size = 1024
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    contours = mark_contours()
     radius = size * 0.22
     ImageDraw.Draw(img).rounded_rectangle((0, 0, size - 1, size - 1), radius=radius, fill=TILE)
-    paint_contours(img, bleed_contours(contours, size), color, clip=True)
+    paint_contours(img, bleed_contours(mark_contours(), size), WHITE, clip=True)
+    return img
+
+
+def load_master() -> Image.Image:
+    master = Image.open(MASTER_PNG).convert("RGBA")
+    if master.size != (1024, 1024):
+        raise SystemExit(f"{MASTER_PNG.name} is {master.size}, expected 1024x1024")
+    painted = render_master()
+    if master.tobytes() != painted.tobytes():
+        raise SystemExit(f"{MASTER_PNG.name} is not the 1024px render of {MARK.name}")
+    return master
+
+
+def downscale(master: Image.Image, size: int, cache: dict[int, Image.Image]) -> Image.Image:
+    """Halve with LANCZOS down to the next power of two, then LANCZOS to `size`."""
+    if size in cache:
+        return cache[size].copy()
+    if size <= 0:
+        raise SystemExit(f"icon size must be positive, got {size}")
+    step = master.size[0]
+    img = master
+    while step // 2 >= size and step % 2 == 0:
+        step //= 2
+        if step in cache:
+            img = cache[step]
+            continue
+        img = img.resize((step, step), Image.Resampling.LANCZOS)
+        cache[step] = img
+    if img.size != (size, size):
+        img = img.resize((size, size), Image.Resampling.LANCZOS)
+        cache[size] = img
+    return img.copy()
+
+
+def tint_letter(img: Image.Image, color: tuple[int, int, int, int]) -> Image.Image:
+    """Recolor the white letter. The tile, the rounded alpha, and the edges stay."""
+    src = img.convert("RGBA")
+    pixels = bytearray(src.tobytes())
+    cr, cg, cb = color[:3]
+    tr, tg, tb = TILE[:3]
+    span = 255 - tr
+    for i in range(0, len(pixels), 4):
+        r, g, b, a = pixels[i : i + 4]
+        if a == 0:
+            continue
+        excess = max(r - tr, g - tg, b - tb, 0)
+        t = excess / span
+        if t > 1:
+            t = 1.0
+        pixels[i] = int(tr + (cr - tr) * t)
+        pixels[i + 1] = int(tg + (cg - tg) * t)
+        pixels[i + 2] = int(tb + (cb - tb) * t)
+    return Image.frombytes("RGBA", src.size, bytes(pixels))
+
+
+def add_badge(img: Image.Image, color: tuple[int, int, int, int]) -> Image.Image:
+    out = img.copy()
+    size = out.size[0]
+    d = max(3, int(size * 0.22))
+    margin = max(1, int(size * 0.06))
+    x1 = size - margin
+    y1 = size - margin
+    ImageDraw.Draw(out).ellipse((x1 - d, y1 - d, x1, y1), fill=color)
+    return out
+
+
+def tray_image(
+    master: Image.Image,
+    cache: dict[int, Image.Image],
+    size: int,
+    *,
+    color,
+    badge,
+) -> Image.Image:
+    img = downscale(master, size, cache)
+    if color != WHITE:
+        img = tint_letter(img, color)
     if badge is not None:
-        d = max(3, int(size * 0.22))
-        margin = max(1, int(size * 0.06))
-        x1 = size - margin
-        y1 = size - margin
-        ImageDraw.Draw(img).ellipse((x1 - d, y1 - d, x1, y1), fill=badge)
+        img = add_badge(img, badge)
     return img
 
 
 def save_png(path: Path, image: Image.Image) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    image.save(path, "PNG")
+    image.convert("RGBA").save(path, "PNG", optimize=True)
 
 
 def png_size(path: Path) -> tuple[int, int]:
@@ -174,18 +250,28 @@ def png_size(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", data[16:24])
 
 
-def write_ico(path: Path) -> None:
-    sizes = ICO_SIZES
-    frames = [render(s, color=WHITE) for s in sizes]
-    frames[-1].save(
-        path,
-        format="ICO",
-        sizes=[(s, s) for s in sizes],
-        append_images=frames[:-1],
-    )
+def png_bytes(image: Image.Image) -> bytes:
+    buf = io.BytesIO()
+    image.convert("RGBA").save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
 
 
-def write_icns(path: Path) -> None:
+def write_ico(path: Path, frames: dict[int, Image.Image]) -> None:
+    """Vista-style icon: every frame is a 32-bit PNG, not a BMP mask."""
+    sizes = [size for size in ICO_SIZES if size in frames]
+    blobs = [png_bytes(frames[size]) for size in sizes]
+    count = len(sizes)
+    header = struct.pack("<HHH", 0, 1, count)
+    offset = 6 + 16 * count
+    entries = []
+    for size, blob in zip(sizes, blobs):
+        dim = 0 if size >= 256 else size
+        entries.append(struct.pack("<BBBBHHII", dim, dim, 0, 0, 1, 32, len(blob), offset))
+        offset += len(blob)
+    path.write_bytes(header + b"".join(entries) + b"".join(blobs))
+
+
+def write_icns(path: Path, cache: dict[int, Image.Image], master: Image.Image) -> None:
     # Filename stems are what icnsutil uses to pick the icon type.
     named = {
         "icon_16x16.png": 16,
@@ -201,25 +287,49 @@ def write_icns(path: Path) -> None:
     }
     icns = icnsutil.IcnsFile()
     for name, size in named.items():
-        buf = io.BytesIO()
-        render(size, color=WHITE).save(buf, format="PNG")
-        icns.add_media(file=name, data=buf.getvalue())
+        icns.add_media(file=name, data=png_bytes(downscale(master, size, cache)))
     icns.write(path)
 
 
+def rmse(a: Image.Image, b: Image.Image) -> float:
+    pa = a.convert("RGBA").tobytes()
+    pb = b.convert("RGBA").tobytes()
+    if len(pa) != len(pb):
+        raise SystemExit(f"rmse size mismatch {a.size} vs {b.size}")
+    acc = 0
+    for left, right in zip(pa, pb):
+        acc += (left - right) ** 2
+    return (acc / len(pa)) ** 0.5
+
+
+def assert_frames_match_lanczos(master: Image.Image, frames: dict[int, Image.Image]) -> None:
+    for size in (256, 32):
+        direct = master.resize((size, size), Image.Resampling.LANCZOS)
+        score = rmse(frames[size], direct)
+        print(f"ico {size}px RMSE vs LANCZOS of master: {score:.3f}")
+        if score > LANCZOS_RMSE_LIMIT:
+            raise SystemExit(f"ico {size}px RMSE {score:.3f} exceeds {LANCZOS_RMSE_LIMIT}")
+
+
 def main() -> None:
-    for path in ICONS.rglob("*.png"):
+    master = load_master()
+    cache: dict[int, Image.Image] = {1024: master}
+
+    for path in sorted(ICONS.rglob("*.png")):
         w, h = png_size(path)
         side = max(w, h)
-        save_png(path, render(side, color=WHITE).resize((w, h), Image.Resampling.LANCZOS))
+        image = downscale(master, side, cache)
+        if (w, h) != (side, side):
+            image = image.resize((w, h), Image.Resampling.LANCZOS)
+        save_png(path, image)
 
-    master = render(1024, color=WHITE)
-    save_png(ICONS / "icon.png", master)
-    write_ico(ICONS / "icon.ico")
-    write_icns(ICONS / "icon.icns")
+    frames = {size: downscale(master, size, cache) for size in ICO_SIZES}
+    assert_frames_match_lanczos(master, frames)
+    write_ico(ICONS / "icon.ico", frames)
+    write_icns(ICONS / "icon.icns", cache, master)
 
-    # Light and dark files are the same bleed tile. Recording tints the letter;
-    # transcribing and warning keep a corner badge so the tray state still reads.
+    # Light and dark files are the same downscale. Recording tints the letter;
+    # transcribing and warning draw a corner badge on top of it.
     pairs = {
         "tray_idle.png": (WHITE, None),
         "tray_idle_dark.png": (WHITE, None),
@@ -235,46 +345,75 @@ def main() -> None:
         "transcribing.png": (WHITE, ACCENT),
     }
     for name, (color, badge) in pairs.items():
-        save_png(RES / name, render(64, color=color, badge=badge))
+        save_png(RES / name, tray_image(master, cache, 64, color=color, badge=badge))
 
-    write_contact_sheet(ROOT / "design" / "voxa-icon-sizes.png")
+    sheet = write_contact_sheet(master, cache)
+    save_png(ROOT / "design" / "voxa-icon-sizes.png", sheet)
 
     out = Path("/opt/cursor/artifacts")
     out.mkdir(parents=True, exist_ok=True)
-    save_png(out / "voxa-mark.png", render(256, color=WHITE))
     save_png(out / "voxa-icon.png", master)
-    save_png(out / "voxa-tray-16.png", render(16, color=WHITE).resize((160, 160), Image.Resampling.NEAREST))
-    save_png(out / "voxa-icon-sizes.png", Image.open(ROOT / "design" / "voxa-icon-sizes.png"))
+    save_png(out / "voxa-mark.png", downscale(master, 256, cache))
+    save_png(
+        out / "voxa-tray-16.png",
+        downscale(master, 16, cache).resize((160, 160), Image.Resampling.NEAREST),
+    )
+    save_png(out / "voxa-icon-sizes.png", sheet)
     print("icons written")
 
 
-def write_contact_sheet(path: Path) -> None:
-    """Every shipped size, plus a nearest-neighbor zoom of the small ones."""
+def write_contact_sheet(master: Image.Image, cache: dict[int, Image.Image]) -> Image.Image:
+    """Master beside each downscale, with 32px and 16px nearest-neighbor zooms."""
     sizes = ICO_SIZES
     zoom = 8
-    label_h = 28
-    pad = 24
-    cell = 256
-    cols = len(sizes)
+    label_h = 22
+    pad = 16
+    cell = 128
+    cols = 1 + len(sizes)
     width = pad + cols * (cell + pad)
-    height = pad + cell + label_h + pad + 16 * zoom + label_h + pad
+    zoom_row = pad + cell + label_h + pad
+    height = zoom_row + 32 * zoom + label_h + pad + 16 * zoom + label_h + pad
     sheet = Image.new("RGBA", (width, height), (24, 24, 27, 255))
     draw = ImageDraw.Draw(sheet)
-    for i, size in enumerate(sizes):
-        icon = render(size, color=WHITE)
-        shown = icon.resize((cell, cell), Image.Resampling.NEAREST)
-        x = pad + i * (cell + pad)
-        sheet.paste(shown, (x, pad))
-        draw.text((x, pad + cell + 6), f"{size}px", fill=(255, 255, 255, 255))
-        if size <= 32:
-            big = icon.resize((size * zoom, size * zoom), Image.Resampling.NEAREST)
-            sheet.paste(big, (x, pad + cell + label_h + pad))
-            draw.text(
-                (x, pad + cell + label_h + pad + size * zoom + 4),
-                f"{size}px ×{zoom}",
-                fill=(180, 180, 186, 255),
-            )
-    save_png(path, sheet)
+
+    def place(image: Image.Image, col: int, y: int, label: str) -> None:
+        side = image.size[0]
+        if side >= cell:
+            shown = image.resize((cell, cell), Image.Resampling.LANCZOS)
+        else:
+            factor = max(1, cell // side)
+            shown = image.resize((side * factor, side * factor), Image.Resampling.NEAREST)
+        x = pad + col * (cell + pad)
+        sheet.paste(shown, (x, y), shown)
+        draw.text((x, y + cell + 4), label, fill=(255, 255, 255, 255))
+
+    place(downscale(master, 256, cache), 0, pad, "master")
+    for i, size in enumerate(sizes, start=1):
+        place(downscale(master, size, cache), i, pad, f"{size}px")
+
+    def zoomed(source: Image.Image, size: int, x: int, y: int, label: str) -> None:
+        big = source.resize((size * zoom, size * zoom), Image.Resampling.NEAREST)
+        sheet.paste(big, (x, y), big)
+        draw.text((x, y + size * zoom + 4), label, fill=(255, 255, 255, 255))
+
+    zoomed(downscale(master, 32, cache), 32, pad, zoom_row, "32px ×8")
+    zoomed(
+        master.resize((32, 32), Image.Resampling.LANCZOS),
+        32,
+        pad + 32 * zoom + pad,
+        zoom_row,
+        "32px LANCZOS ×8",
+    )
+    y16 = zoom_row + 32 * zoom + label_h + pad
+    zoomed(downscale(master, 16, cache), 16, pad, y16, "16px ×8")
+    zoomed(
+        master.resize((16, 16), Image.Resampling.LANCZOS),
+        16,
+        pad + 16 * zoom + pad,
+        y16,
+        "16px LANCZOS ×8",
+    )
+    return sheet
 
 
 if __name__ == "__main__":

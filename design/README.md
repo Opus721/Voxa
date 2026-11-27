@@ -2,7 +2,7 @@
 
 Sergei's pick from the display italics: Libre Bodoni Italic, weight 600 (Impallari Type, Pablo Impallari and Rodrigo Fuenzalida, SIL OFL 1.1). The letter is the outlined V in `voxa-mark-italic-4.svg`, and that path is now `src/assets/voxa-mark.svg`.
 
-Variant 2, the medium bleed, is every app icon: white on `#09090a`, about 20% past the left and bottom. `scripts/generate-voxa-icons.py` paints that crop at every size, including the exe frames and the tray. The sidebar letter is the same outlined V, drawn in the UI color.
+Variant 2, the medium bleed, is every app icon: white on `#09090a`, about 20% past the left and bottom. `scripts/generate-voxa-icons.py` downscales `voxa-mark-bodoni-bleed-2.png` to every size, including the exe frames and the tray. The sidebar letter is the same outlined V, drawn in the UI color.
 
 The three tiles draw that V large and toward the bottom-left, so the rounded square crops the left and bottom edges. The top-right serif stays inside.
 
