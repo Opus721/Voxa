@@ -137,6 +137,13 @@ fn show_main_window(app: &AppHandle) {
         if let Err(e) = main_window.unminimize() {
             log::error!("Failed to unminimize webview window: {}", e);
         }
+        // A hidden or tray launch can leave the window off the taskbar.
+        // Showing it from a manual launch, the tray, or a second start
+        // puts the button back.
+        #[cfg(target_os = "windows")]
+        if let Err(e) = main_window.set_skip_taskbar(false) {
+            log::error!("Failed to keep the main window on the taskbar: {}", e);
+        }
         if let Err(e) = main_window.show() {
             log::error!("Failed to show webview window: {}", e);
         }
@@ -173,10 +180,11 @@ fn show_main_window(app: &AppHandle) {
 /// the supported direction.
 ///
 /// Mirrors the show-window decision in `setup`: the app launches without a
-/// Dock icon only when it will start hidden (setting or `--start-hidden`) AND a
-/// tray icon is available (setting and not `--no-tray`). With no tray the Dock
-/// icon stays as the only way back into the app (#903). Headless one-shot
-/// runs are left alone.
+/// Dock icon only when it will start hidden (`--start-hidden`, or
+/// `--autostart` with the minimized-at-login setting) AND a tray icon is
+/// available (setting and not `--no-tray`). With no tray the Dock icon stays
+/// as the only way back into the app (#903). Headless one-shot runs are left
+/// alone. A manual launch keeps the Dock icon.
 #[cfg(target_os = "macos")]
 fn apply_startup_activation_policy(app: &mut tauri::App, headless_mode: bool) {
     if headless_mode {
@@ -186,7 +194,7 @@ fn apply_startup_activation_policy(app: &mut tauri::App, headless_mode: bool) {
     let cli_args = app.state::<CliArgs>().inner().clone();
     let settings = settings::get_settings(app.handle());
 
-    let should_hide = settings.start_hidden || cli_args.start_hidden;
+    let should_hide = launch_should_hide(&cli_args, settings.start_hidden);
     let tray_available = settings.show_tray_icon && !cli_args.no_tray;
 
     if should_hide && tray_available {
@@ -219,6 +227,15 @@ fn should_force_show_permissions_window(app: &AppHandle) -> bool {
     }
 
     false
+}
+
+/// Whether this process should leave the main window hidden.
+///
+/// `--start-hidden` always hides. `--autostart` hides only when the
+/// minimized-at-login setting is on. Opening the app from the Start menu,
+/// a shortcut, or the exe shows the window even if that setting is on.
+fn launch_should_hide(cli: &CliArgs, start_hidden_setting: bool) -> bool {
+    cli.start_hidden || (cli.autostart && start_hidden_setting)
 }
 
 fn initialize_core_logic(app_handle: &AppHandle) {
@@ -935,19 +952,23 @@ pub fn run(cli_args: CliArgs) {
     // instance instead.
     if !headless_mode {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            // The login item can fire while Voxa is already in the tray.
+            // That launch must not raise the window. Remote-control flags
+            // still run.
+            let from_autostart = args.iter().any(|a| a == "--autostart");
             if args.iter().any(|a| a == "--toggle-transcription") {
                 signal_handle::send_transcription_input(app, "transcribe", "CLI");
             } else if args.iter().any(|a| a == "--toggle-post-process") {
                 signal_handle::send_transcription_input(app, "transcribe_with_post_process", "CLI");
             } else if args.iter().any(|a| a == "--cancel") {
                 crate::utils::cancel_current_operation(app);
-            } else {
+            } else if !from_autostart {
                 // A second process was launched without remote-control flags
-                // (e.g. the binary run from a shell). On macOS, relaunching the
-                // bundle from Spotlight/Finder/Dock does not start a process —
-                // it arrives as RunEvent::Reopen below — but treat this the
-                // same way: raise the window and recreate a possibly vanished
-                // tray icon (#1948).
+                // (Start menu, shortcut, exe, or a shell). On macOS,
+                // relaunching the bundle from Spotlight/Finder/Dock does not
+                // start a process — it arrives as RunEvent::Reopen below —
+                // but treat this the same way: raise the window and recreate
+                // a possibly vanished tray icon (#1948).
                 #[cfg(target_os = "macos")]
                 tray::recreate_tray_icon(app);
                 show_main_window(app);
@@ -969,7 +990,7 @@ pub fn run(cli_args: CliArgs) {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
-            Some(vec![]),
+            Some(vec!["--autostart".into()]),
         ))
         .manage(cli_args.clone())
         .manage(notices::NoticeStore::default())
@@ -1161,12 +1182,12 @@ pub fn run(cli_args: CliArgs) {
                 tray::set_tray_visibility(&app_handle, false);
             }
 
-            // Show the main window only if not starting hidden.
-            // `--start-hidden` overrides the setting. The close button's
-            // minimize behavior does not apply here: a hidden launch stays
-            // off the taskbar until the user opens the window. Permission
-            // onboarding still forces the window open.
-            let should_hide = settings.start_hidden || cli_args.start_hidden;
+            // A manual launch always shows the window. Only `--start-hidden`,
+            // or `--autostart` with the minimized-at-login setting, leaves it
+            // hidden. The close button's minimize behavior does not apply
+            // here: a hidden launch stays off the taskbar until the user
+            // opens the window. Permission onboarding still forces it open.
+            let should_hide = launch_should_hide(&cli_args, settings.start_hidden);
             let should_force_show = should_force_show_permissions_window(&app_handle);
 
             // If start_hidden but tray is disabled, we must show the window
@@ -1244,4 +1265,35 @@ pub fn run(cli_args: CliArgs) {
         // could block quitting behind a hung model load.
         _ => {}
     });
+}
+
+#[cfg(test)]
+mod launch_tests {
+    use super::launch_should_hide;
+    use crate::cli::CliArgs;
+
+    #[test]
+    fn manual_launch_shows_the_window_even_when_minimized_at_login_is_on() {
+        let cli = CliArgs::default();
+        assert!(!launch_should_hide(&cli, true));
+    }
+
+    #[test]
+    fn start_hidden_flag_hides_regardless_of_the_setting() {
+        let cli = CliArgs {
+            start_hidden: true,
+            ..CliArgs::default()
+        };
+        assert!(launch_should_hide(&cli, false));
+    }
+
+    #[test]
+    fn autostart_hides_only_when_the_setting_is_on() {
+        let cli = CliArgs {
+            autostart: true,
+            ..CliArgs::default()
+        };
+        assert!(launch_should_hide(&cli, true));
+        assert!(!launch_should_hide(&cli, false));
+    }
 }

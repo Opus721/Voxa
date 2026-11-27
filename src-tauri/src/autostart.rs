@@ -39,6 +39,84 @@ pub fn apply_autostart(app: &AppHandle, enabled: bool) {
             e
         );
     }
+
+    // An entry written before `--autostart` existed still launches the app,
+    // but the window would come up. Rewrite it so the next login stays in
+    // the tray when that setting is on. `enable()` above already writes the
+    // flag for a fresh entry; this covers the value that was already there.
+    #[cfg(target_os = "windows")]
+    if enabled {
+        ensure_run_entry_passes_autostart(app);
+    }
+}
+
+/// Append `--autostart` to a login command that does not already pass it.
+/// Returns `None` when the command is empty or the flag is already present.
+fn command_with_autostart_flag(command: &str) -> Option<String> {
+    let trimmed = command.trim();
+    if trimmed.is_empty() || trimmed.split_whitespace().any(|arg| arg == "--autostart") {
+        return None;
+    }
+    Some(format!("{trimmed} --autostart"))
+}
+
+/// The HKCU Run value the autostart plugin owns, under the package name.
+#[cfg(target_os = "windows")]
+fn ensure_run_entry_passes_autostart(app: &AppHandle) {
+    use winreg::enums::{HKEY_CURRENT_USER, KEY_READ, KEY_SET_VALUE};
+    use winreg::RegKey;
+
+    let name = app.package_info().name.clone();
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let key = match hkcu.open_subkey_with_flags(
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+        KEY_READ | KEY_SET_VALUE,
+    ) {
+        Ok(key) => key,
+        Err(e) => {
+            log::warn!("Failed to open the HKCU Run key: {}", e);
+            return;
+        }
+    };
+
+    let current: String = match key.get_value(&name) {
+        Ok(value) => value,
+        Err(_) => return,
+    };
+    let Some(updated) = command_with_autostart_flag(&current) else {
+        return;
+    };
+    if let Err(e) = key.set_value(&name, &updated) {
+        log::warn!("Failed to add --autostart to the HKCU Run entry: {}", e);
+    } else {
+        log::info!("Updated the HKCU Run entry to pass --autostart");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::command_with_autostart_flag;
+
+    #[test]
+    fn appends_the_flag_to_an_existing_command() {
+        assert_eq!(
+            command_with_autostart_flag(r"C:\Program Files\Voxa\handy.exe"),
+            Some(r"C:\Program Files\Voxa\handy.exe --autostart".to_string())
+        );
+    }
+
+    #[test]
+    fn leaves_a_command_that_already_passes_the_flag() {
+        assert_eq!(
+            command_with_autostart_flag(r"C:\Voxa\handy.exe --autostart"),
+            None
+        );
+    }
+
+    #[test]
+    fn ignores_an_empty_command() {
+        assert_eq!(command_with_autostart_flag("  "), None);
+    }
 }
 
 #[cfg(target_os = "macos")]

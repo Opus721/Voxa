@@ -6,19 +6,21 @@ import { useSettings } from "../../hooks/useSettings";
 interface StartHiddenProps {
   descriptionMode?: "inline" | "tooltip";
   grouped?: boolean;
+  disabled?: boolean;
 }
 
 export const StartHidden: React.FC<StartHiddenProps> = React.memo(
-  ({ descriptionMode = "tooltip", grouped = false }) => {
+  ({ descriptionMode = "tooltip", grouped = false, disabled = false }) => {
     const { t } = useTranslation();
     const { getSetting, updateSetting, isUpdating } = useSettings();
 
-    const startHidden = getSetting("start_hidden") ?? false;
+    const startHidden = getSetting("start_hidden") ?? true;
 
     return (
       <ToggleSwitch
         checked={startHidden}
         onChange={(enabled) => updateSetting("start_hidden", enabled)}
+        disabled={disabled}
         isUpdating={isUpdating("start_hidden")}
         label={t("settings.advanced.startHidden.label")}
         description={t("settings.advanced.startHidden.description")}

@@ -4,8 +4,6 @@ import { ShowOverlay } from "../ShowOverlay";
 import { ModelUnloadTimeoutSetting } from "../ModelUnloadTimeout";
 import { CustomWords } from "../CustomWords";
 import { SettingsGroup } from "../../ui/SettingsGroup";
-import { StartHidden } from "../StartHidden";
-import { AutostartToggle } from "../AutostartToggle";
 import { ShowTrayIcon } from "../ShowTrayIcon";
 import { PasteMethodSetting } from "../PasteMethod";
 import { TypingToolSetting } from "../TypingTool";
@@ -35,8 +33,6 @@ export const AdvancedSettings: React.FC = () => {
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
       <SettingsGroup title={t("settings.advanced.groups.app")}>
-        <StartHidden descriptionMode="inline" grouped={true} />
-        <AutostartToggle descriptionMode="inline" grouped={true} />
         <ShowTrayIcon descriptionMode="inline" grouped={true} />
         <ShowOverlay descriptionMode="inline" grouped={true} />
         <ModelUnloadTimeoutSetting descriptionMode="inline" grouped={true} />

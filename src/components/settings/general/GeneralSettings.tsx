@@ -8,6 +8,8 @@ import { SettingsGroup } from "../../ui/SettingsGroup";
 import { OutputDeviceSelector } from "../OutputDeviceSelector";
 import { ShortcutActivationSetting } from "../ShortcutActivation";
 import { CloseButtonSetting } from "../CloseButton";
+import { AutostartToggle } from "../AutostartToggle";
+import { StartHidden } from "../StartHidden";
 import { AudioFeedback } from "../AudioFeedback";
 import { useSettings } from "../../../hooks/useSettings";
 import { VolumeSlider } from "../VolumeSlider";
@@ -20,6 +22,7 @@ import { isChinese } from "@/lib/utils/languageSuggestions";
 export const GeneralSettings: React.FC = () => {
   const { t } = useTranslation();
   const { audioFeedbackEnabled, getSetting } = useSettings();
+  const autostartEnabled = getSetting("autostart_enabled") ?? false;
   const isLinux = type() === "linux";
   // Only for Chinese speakers, or anyone who already picked a script.
   const speaksChinese =
@@ -31,6 +34,10 @@ export const GeneralSettings: React.FC = () => {
         <ShortcutInput shortcutId="transcribe" grouped={true} />
         <ShortcutActivationSetting descriptionMode="inline" grouped={true} />
         <CloseButtonSetting descriptionMode="inline" grouped={true} />
+        <AutostartToggle descriptionMode="inline" grouped={true} />
+        {autostartEnabled && (
+          <StartHidden descriptionMode="inline" grouped={true} />
+        )}
         {/* Cancel shortcut remains hidden on Linux because of dynamic shortcut instability. */}
         {!isLinux && <ShortcutInput shortcutId="cancel" grouped={true} />}
       </SettingsGroup>

@@ -4,9 +4,15 @@ use std::path::PathBuf;
 #[derive(Parser, Debug, Clone, Default)]
 #[command(name = "handy", about = "Handy - Speech to Text")]
 pub struct CliArgs {
-    /// Start with the main window hidden
+    /// Start with the main window hidden. A manual override: the window stays
+    /// hidden even when this is not a login-item launch.
     #[arg(long)]
     pub start_hidden: bool,
+
+    /// Launched by the OS login item. The window stays hidden only when the
+    /// "start minimized" setting is on. A normal launch does not pass this.
+    #[arg(long)]
+    pub autostart: bool,
 
     /// Disable the system tray icon
     #[arg(long)]

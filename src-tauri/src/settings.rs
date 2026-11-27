@@ -424,6 +424,9 @@ pub struct AppSettings {
     pub audio_feedback_volume: f32,
     #[serde(default = "default_sound_theme")]
     pub sound_theme: SoundTheme,
+    /// When Windows (or the OS login item) starts Voxa with `--autostart`,
+    /// hide the window and stay in the tray. A manual launch ignores this.
+    /// Missing keys from older stores minimize at login.
     #[serde(default = "default_start_hidden")]
     pub start_hidden: bool,
     /// Close button. Missing keys from older stores minimize, which keeps a
@@ -604,7 +607,9 @@ fn default_translate_to_english() -> bool {
 }
 
 fn default_start_hidden() -> bool {
-    false
+    // New installs start minimized when the login item launches Voxa. A store
+    // that already saved this flag keeps its value.
+    true
 }
 
 /// What the main window's close button does. The tray Quit item always exits.
@@ -1576,6 +1581,7 @@ mod tests {
         );
         assert_eq!(settings.hold_threshold_ms, default_hold_threshold_ms());
         assert!(!settings.audio_feedback);
+        assert!(settings.start_hidden);
         assert_eq!(settings.close_button, CloseButtonBehavior::Minimize);
         assert_eq!(settings.sound_theme, SoundTheme::Voxa);
         assert_eq!(SoundTheme::Voxa.to_start_path(), "resources/voxa_start.wav");
