@@ -186,10 +186,11 @@ fn physical_modifiers_held() -> bool {
     }
     // VK_SHIFT, VK_CONTROL, VK_MENU (Alt), VK_LWIN, VK_RWIN.
     const MODIFIERS: [i32; 5] = [0x10, 0x11, 0x12, 0x5B, 0x5C];
-    MODIFIERS.iter().any(|&vk| {
-        let state = unsafe { GetAsyncKeyState(vk) };
-        (state as u16) & 0x8000 != 0
-    })
+    crate::shortcut::handy_keys::dictation_shortcut_held()
+        || MODIFIERS.iter().any(|&vk| {
+            let state = unsafe { GetAsyncKeyState(vk) };
+            (state as u16) & 0x8000 != 0
+        })
 }
 
 /// Linux has no portable way to read the physical keyboard state.

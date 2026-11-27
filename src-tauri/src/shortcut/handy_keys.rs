@@ -42,6 +42,31 @@ use crate::settings::{self, get_settings, ShortcutBinding};
 
 use super::handler::handle_shortcut_event;
 
+// Windows does not update GetAsyncKeyState for modifier events swallowed by
+// the low-level keyboard hook. Track the two dictation shortcuts independently
+// until handy-keys delivers their matching release (or unregisters them).
+#[cfg(target_os = "windows")]
+static HELD_DICTATION_SHORTCUTS: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+
+#[cfg(target_os = "windows")]
+fn set_dictation_shortcut_held(binding: &str, pressed: bool) {
+    let bit = match binding {
+        "transcribe" => 1,
+        "transcribe_with_post_process" => 2,
+        _ => return,
+    };
+    if pressed {
+        HELD_DICTATION_SHORTCUTS.fetch_or(bit, Ordering::SeqCst);
+    } else {
+        HELD_DICTATION_SHORTCUTS.fetch_and(!bit, Ordering::SeqCst);
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub(crate) fn dictation_shortcut_held() -> bool {
+    HELD_DICTATION_SHORTCUTS.load(Ordering::SeqCst) != 0
+}
+
 /// Commands that can be sent to the hotkey manager thread
 enum ManagerCommand {
     Register {
@@ -128,6 +153,8 @@ impl HandyKeysState {
                         binding_id, hotkey_string, event.state
                     );
                     let is_pressed = event.state == HotkeyState::Pressed;
+                    #[cfg(target_os = "windows")]
+                    set_dictation_shortcut_held(binding_id, is_pressed);
                     handle_shortcut_event(&app, binding_id, hotkey_string, is_pressed);
                 }
             }
@@ -176,6 +203,8 @@ impl HandyKeysState {
             }
         }
 
+        #[cfg(target_os = "windows")]
+        HELD_DICTATION_SHORTCUTS.store(0, Ordering::SeqCst);
         info!("handy-keys manager thread stopped");
     }
 
@@ -217,6 +246,8 @@ impl HandyKeysState {
                 .unregister(id)
                 .map_err(|e| format!("Failed to unregister hotkey: {}", e))?;
             hotkey_to_binding.remove(&id);
+            #[cfg(target_os = "windows")]
+            set_dictation_shortcut_held(binding_id, false);
             debug!("Unregistered handy-keys shortcut: {}", binding_id);
         }
         Ok(())
