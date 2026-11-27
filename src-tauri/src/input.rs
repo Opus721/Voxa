@@ -158,6 +158,100 @@ impl EnigoState {
     }
 }
 
+/// Whether the user is physically holding a modifier (Shift, Ctrl, Alt, Win,
+/// or macOS fn / Command). Reads the hardware state, so keys this process
+/// injects do not count.
+#[cfg(target_os = "macos")]
+fn physical_modifiers_held() -> bool {
+    #[link(name = "CoreGraphics", kind = "framework")]
+    unsafe extern "C" {
+        fn CGEventSourceFlagsState(state_id: i32) -> u64;
+    }
+    const HID_SYSTEM_STATE: i32 = 1;
+    const SHIFT: u64 = 0x0002_0000;
+    const CONTROL: u64 = 0x0004_0000;
+    const OPTION: u64 = 0x0008_0000;
+    const COMMAND: u64 = 0x0010_0000;
+    const FN: u64 = 0x0080_0000;
+
+    let flags = unsafe { CGEventSourceFlagsState(HID_SYSTEM_STATE) };
+    flags & (SHIFT | CONTROL | OPTION | COMMAND | FN) != 0
+}
+
+#[cfg(target_os = "windows")]
+fn physical_modifiers_held() -> bool {
+    #[link(name = "user32")]
+    unsafe extern "system" {
+        fn GetAsyncKeyState(vkey: i32) -> i16;
+    }
+    // VK_SHIFT, VK_CONTROL, VK_MENU (Alt), VK_LWIN, VK_RWIN.
+    const MODIFIERS: [i32; 5] = [0x10, 0x11, 0x12, 0x5B, 0x5C];
+    MODIFIERS.iter().any(|&vk| {
+        let state = unsafe { GetAsyncKeyState(vk) };
+        (state as u16) & 0x8000 != 0
+    })
+}
+
+/// Linux has no portable way to read the physical keyboard state.
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn physical_modifiers_held() -> bool {
+    false
+}
+
+/// Polls `held` until it reports false or `timeout` passes.
+fn wait_until_released(
+    mut held: impl FnMut() -> bool,
+    timeout: std::time::Duration,
+    poll: std::time::Duration,
+) -> (std::time::Duration, bool) {
+    let start = std::time::Instant::now();
+    loop {
+        if !held() {
+            return (start.elapsed(), true);
+        }
+        if start.elapsed() >= timeout {
+            return (start.elapsed(), false);
+        }
+        std::thread::sleep(poll);
+    }
+}
+
+/// Waits until modifier keys are up before Voxa sends keystrokes.
+///
+/// A fast transcription can be ready while the shortcut's modifier (right
+/// Ctrl, fn, …) is still physically down. Injecting Ctrl+V then is delivered
+/// as a bare `v`, or as a chord the target ignores
+/// ([Handy #2051](https://github.com/cjpais/Handy/issues/2051), #595).
+///
+/// After the hardware state clears, waits `settle` so the target app can
+/// process the key-up before the paste chord. Gives up after `timeout` so a
+/// key held on purpose cannot block the paste.
+///
+/// Sleeps. Call it from a worker thread, never the main thread.
+pub fn wait_for_modifiers_released(timeout: std::time::Duration, settle: std::time::Duration) {
+    let (waited, released) = wait_until_released(
+        physical_modifiers_held,
+        timeout,
+        std::time::Duration::from_millis(10),
+    );
+    if !released {
+        log::warn!(
+            "Modifier keys still held after {}ms; sending keystrokes anyway",
+            waited.as_millis()
+        );
+        return;
+    }
+    if !waited.is_zero() {
+        log::info!(
+            "Waited {}ms for modifier keys to be released before pasting",
+            waited.as_millis()
+        );
+        // The key-up can still be queued in the foreground app after
+        // GetAsyncKeyState / CGEventSourceFlagsState first reports clear.
+        std::thread::sleep(settle);
+    }
+}
+
 /// Get the current mouse cursor position using the managed Enigo instance.
 /// Returns None if the state is not available or if getting the location fails.
 pub fn get_cursor_position(app_handle: &AppHandle) -> Option<(i32, i32)> {
@@ -275,4 +369,41 @@ pub fn paste_text_direct(enigo: &mut Enigo, text: &str) -> Result<(), String> {
         .map_err(|e| format!("Failed to send text directly: {}", e))?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wait_until_released;
+    use std::time::Duration;
+
+    #[test]
+    fn returns_at_once_when_nothing_is_held() {
+        let (waited, released) =
+            wait_until_released(|| false, Duration::from_secs(1), Duration::from_millis(1));
+        assert!(released);
+        assert!(waited < Duration::from_millis(50));
+    }
+
+    #[test]
+    fn waits_until_keys_are_released() {
+        let mut polls = 0;
+        let (_, released) = wait_until_released(
+            || {
+                polls += 1;
+                polls < 4
+            },
+            Duration::from_secs(1),
+            Duration::from_millis(1),
+        );
+        assert!(released);
+        assert_eq!(polls, 4);
+    }
+
+    #[test]
+    fn gives_up_after_timeout() {
+        let (waited, released) =
+            wait_until_released(|| true, Duration::from_millis(30), Duration::from_millis(5));
+        assert!(!released);
+        assert!(waited >= Duration::from_millis(30));
+    }
 }
