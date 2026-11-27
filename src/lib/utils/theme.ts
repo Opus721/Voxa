@@ -47,7 +47,7 @@ export const getStoredTheme = (): Theme => {
   } catch {
     // ignore
   }
-  return "system";
+  return "dark";
 };
 
 /** Apply the persisted theme from AppSettings (the source of truth). */

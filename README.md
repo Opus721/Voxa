@@ -1,10 +1,12 @@
-# Handy
+# Voxa
 
-[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/invite/WVBeWsNXK4)
+**Offline speech-to-text. Press a shortcut, speak, and the words land in the focused text field.**
 
-**A free, open source, and extensible speech-to-text application that works completely offline.**
+Voxa is Sergei's build of [Handy](https://github.com/cjpais/Handy) by CJ Pais. Handy is MIT licensed; that copyright and this license stay in [LICENSE](LICENSE). The app identifier is still `com.pais.handy`, so an existing Handy install keeps its settings, history, models, and custom sounds (`%APPDATA%\com.pais.handy`).
 
-Handy is a cross-platform desktop application that provides simple, privacy-focused speech transcription. Press a shortcut, speak, and have your words appear in any text field. This happens on your own computer without sending any information to the cloud.
+Update checks are off. This build will not install an upstream Handy release over itself.
+
+The interface follows Linear's app, using the same dark tokens as the [Buba theme](https://github.com/Opus721/obsidian-buba-theme). See [DESIGN.md](DESIGN.md).
 
 ## Why Handy?
 
@@ -34,17 +36,9 @@ The process is entirely local:
 
 ### Installation
 
-1. Download the latest release from the [releases page](https://github.com/cjpais/Handy/releases) or the [website](https://handy.computer)
-   - **macOS**: Also available via [Homebrew cask](https://formulae.brew.sh/cask/handy): `brew install --cask handy`
-   - **Windows**: Also available via [winget](https://github.com/microsoft/winget-pkgs): `winget install cjpais.Handy` \
-     **Note:** The Homebrew cask and winget package are not maintained by the Handy developers.
-   - **Debian/Ubuntu**: Install the downloaded `.deb` with APT so required dependencies are installed automatically:
-     ```bash
-     sudo apt install ./Handy_*.deb
-     ```
-     Do not use `dpkg -i` unless the dependencies are already installed. If you already used it, run `sudo apt --fix-broken install`.
+1. On Windows, download the unsigned installer from a run of the [Windows x64 workflow](https://github.com/Opus721/Voxa/actions/workflows/windows-x64.yml) (Actions must be enabled on the repository). The installer is named `Voxa_*_x64-setup.exe`. The program file inside it is still `handy.exe`, so existing shortcuts and the `com.pais.handy` data folder keep working. Homebrew and winget still install upstream Handy, not this build.
 2. Install the application
-3. Launch Handy and grant necessary system permissions (microphone, accessibility)
+3. Launch Voxa and grant the microphone permission
 4. Configure your preferred keyboard shortcuts in Settings
 5. Start transcribing!
 

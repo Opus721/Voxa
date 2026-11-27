@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Cog, FlaskConical, History, Info, Sparkles, Cpu } from "lucide-react";
-import HandyTextLogo from "./icons/HandyTextLogo";
 import HandyHand from "./icons/HandyHand";
 import { useSettings } from "../hooks/useSettings";
 import {
@@ -20,7 +19,8 @@ interface IconProps {
   height?: number | string;
   size?: number | string;
   className?: string;
-  [key: string]: any;
+  strokeWidth?: number | string;
+  [key: string]: unknown;
 }
 
 interface SectionConfig {
@@ -28,7 +28,7 @@ interface SectionConfig {
   icon: React.ComponentType<IconProps>;
   /** `null` when App renders the section itself (Debug, with its handlers). */
   component: React.ComponentType | null;
-  enabled: (settings: any) => boolean;
+  enabled: (settings: unknown) => boolean;
 }
 
 export const SECTIONS_CONFIG = {
@@ -60,13 +60,16 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.postProcessing",
     icon: Sparkles,
     component: PostProcessingSettings,
-    enabled: (settings) => settings?.post_process_enabled ?? false,
+    enabled: (settings) =>
+      (settings as { post_process_enabled?: boolean } | null)
+        ?.post_process_enabled ?? false,
   },
   debug: {
     labelKey: "sidebar.debug",
     icon: FlaskConical,
     component: null,
-    enabled: (settings) => settings?.debug_mode ?? false,
+    enabled: (settings) =>
+      (settings as { debug_mode?: boolean } | null)?.debug_mode ?? false,
   },
   about: {
     labelKey: "sidebar.about",
@@ -93,34 +96,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
     .map(([id, config]) => ({ id: id as SidebarSection, ...config }));
 
   return (
-    <div className="flex flex-col w-40 h-full border-e border-line items-center px-2">
-      <HandyTextLogo width={120} className="m-4" />
-      <div className="flex flex-col w-full items-center gap-1 pt-2 border-t border-line">
+    <nav className="flex flex-col w-[220px] shrink-0 h-full bg-frame px-2 py-3">
+      <div className="flex items-center gap-2 px-2 h-8 mb-3">
+        <HandyHand width={16} height={16} className="text-emphasis" />
+        <span className="text-[13px] font-semibold tracking-[-0.02em] text-emphasis">
+          {t("app.name")}
+        </span>
+      </div>
+      <div className="flex flex-col gap-px">
         {availableSections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
 
           return (
-            <div
+            <button
               key={section.id}
-              className={`flex gap-2 items-center p-2 w-full rounded-lg cursor-pointer transition-colors ${
+              type="button"
+              className={`flex gap-2 items-center h-7 px-2 w-full rounded-[6px] cursor-pointer transition-colors duration-150 text-start ${
                 isActive
-                  ? "bg-logo-primary/80"
-                  : "hover:bg-line hover:opacity-100 opacity-85"
+                  ? "bg-control text-emphasis"
+                  : "text-ink-2 hover:bg-hover hover:text-emphasis"
               }`}
               onClick={() => onSectionChange(section.id)}
             >
-              <Icon width={24} height={24} className="shrink-0" />
-              <p
-                className="text-sm font-medium truncate"
-                title={t(section.labelKey)}
-              >
+              <Icon
+                width={16}
+                height={16}
+                size={16}
+                strokeWidth={1.5}
+                className="shrink-0"
+              />
+              <span className="text-[13px] font-medium truncate">
                 {t(section.labelKey)}
-              </p>
-            </div>
+              </span>
+            </button>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 };

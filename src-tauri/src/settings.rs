@@ -1,4 +1,3 @@
-use crate::utils;
 use log::{debug, warn};
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -605,7 +604,9 @@ fn default_autostart_enabled() -> bool {
 }
 
 fn default_update_checks_enabled() -> bool {
-    true
+    // Voxa does not ship updates. The stored default stays off; the forced
+    // disable below also ignores a `true` left over from a Handy install.
+    false
 }
 
 fn default_show_whats_new_on_update() -> bool {
@@ -707,7 +708,7 @@ fn default_sound_theme() -> SoundTheme {
 }
 
 fn default_theme() -> Theme {
-    Theme::System
+    Theme::Dark
 }
 
 fn default_post_process_enabled() -> bool {
@@ -1436,6 +1437,7 @@ fn linux_self_update_possible(kind: Option<BundleKind>, has_tool: impl Fn(&str) 
 }
 
 #[cfg(target_os = "linux")]
+#[allow(dead_code)]
 fn self_update_possible() -> bool {
     use std::os::unix::fs::PermissionsExt;
     use tauri::utils::config::BundleType;
@@ -1461,19 +1463,18 @@ fn self_update_possible() -> bool {
 }
 
 #[cfg(not(target_os = "linux"))]
+#[allow(dead_code)]
 fn self_update_possible() -> bool {
     true
 }
 
-/// Update checks are forced off (without touching the persisted setting) when
-/// `HANDY_DISABLE_UPDATER` is set — e.g. by the Nix package, since self-update
-/// can't work against an immutable /nix/store install — or when this build
-/// cannot install its own update (see `linux_self_update_possible`).
+/// Update checks are always off in Voxa. The built-in updater points at
+/// upstream Handy releases; installing one would replace this app. The
+/// persisted `update_checks_enabled` value is left alone.
+///
+/// `HANDY_DISABLE_UPDATER` still forces the same result for Nix builds.
 pub fn update_checks_forced_disabled() -> bool {
-    use std::sync::OnceLock;
-    static IS_UPDATER_DISABLED: OnceLock<bool> = OnceLock::new();
-    *IS_UPDATER_DISABLED
-        .get_or_init(|| utils::env_flag_enabled("HANDY_DISABLE_UPDATER") || !self_update_possible())
+    true
 }
 
 /// Effective updater state: the user's stored preference, overridden to `false`

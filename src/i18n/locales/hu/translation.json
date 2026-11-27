@@ -1,4 +1,7 @@
 {
+  "app": {
+    "name": "Voxa"
+  },
   "tray": {
     "settings": "Beállítások...",
     "checkUpdates": "Frissítések keresése...",
@@ -25,7 +28,7 @@
     "customModelDescription": "Hivatalosan nem támogatott",
     "migration": {
       "title": "A modelljeidet frissíteni kell",
-      "description": "A Handy mostantól újabb típusú modellt használ. Töltsd le az új verziót, hogy továbbra is működjön az átírás. A régi verziók törlődnek.",
+      "description": "A Voxa mostantól újabb típusú modellt használ. Töltsd le az új verziót, hogy továbbra is működjön az átírás. A régi verziók törlődnek.",
       "replaces": "Ezt váltja fel: {{name}}",
       "oldFormat": "Régi formátum",
       "failed": "A letöltés sikertelen",
@@ -62,11 +65,11 @@
     "permissions": {
       "microphone": {
         "name": "Mikrofon",
-        "why": "Hogy a Handy hallja a hangodat. A hang ezen a számítógépen alakul szöveggé, és soha nem töltődik fel."
+        "why": "Hogy a Voxa hallja a hangodat. A hang ezen a számítógépen alakul szöveggé, és soha nem töltődik fel."
       },
       "accessibility": {
         "name": "Kisegítő lehetőségek",
-        "why": "Hogy a billentyűparancs minden alkalmazásban működjön, és a Handy oda írhassa a szöveget, ahol a kurzor van."
+        "why": "Hogy a billentyűparancs minden alkalmazásban működjön, és a Voxa oda írhassa a szöveget, ahol a kurzor van."
       },
       "errors": {
         "checkFailed": "Az engedélyek ellenőrzése sikertelen. Próbáld újra.",
@@ -80,12 +83,12 @@
       "openSettings": "Beállítások megnyitása",
       "allowed": "Engedélyezve",
       "waiting": "Várakozás",
-      "turnOnMac": "Kapcsold be a Handyt a Rendszerbeállításokban, majd gyere vissza ide.",
+      "turnOnMac": "Kapcsold be a Voxat a Rendszerbeállításokban, majd gyere vissza ide.",
       "turnOnWindows": "Kapcsold be a mikrofonhozzáférést a Windows beállításaiban, majd gyere vissza ide.",
       "hintBoth": "A folytatáshoz engedélyezd mindkettőt",
       "hintMicrophone": "A folytatáshoz engedélyezd a mikrofont",
       "welcomeBack": "Üdv újra! Ott folytatjuk, ahol abbahagytad.",
-      "relaunch": "Ezután sem reagál a billentyűparancs? <relaunch>Indítsd újra a Handyt</relaunch>, és pontosan ide térsz vissza."
+      "relaunch": "Ezután sem reagál a billentyűparancs? <relaunch>Indítsd újra a Voxat</relaunch>, és pontosan ide térsz vissza."
     },
     "shell": {
       "back": "Vissza",
@@ -96,11 +99,11 @@
       "title": "Beszélj gépelés helyett, bármelyik alkalmazásban",
       "subtitle": "Válaszd ki a nyelveket, amelyeken diktálni fogsz",
       "languagesLabel": "Nyelvek",
-      "noMatch": "Nincs találat erre: „{{query}}”. A Handy modelljei körülbelül 100 nyelvet ismernek; a többit a beállításokban találod.",
+      "noMatch": "Nincs találat erre: „{{query}}”. A Voxa modelljei körülbelül 100 nyelvet ismernek; a többit a beállításokban találod.",
       "appLanguage": "Az alkalmazás nyelve",
       "menusIn": "Menük nyelve: <b>{{language}}</b>",
       "chinese": {
-        "question": "Beszélt nyelveid: {{languages}}. Milyen írásjegyekkel írjon a Handy?",
+        "question": "Beszélt nyelveid: {{languages}}. Milyen írásjegyekkel írjon a Voxa?",
         "label": "Kínai írásjegyek",
         "zh-Hans": "Egyszerűsített",
         "zh-Hant": "Tajvani",
@@ -170,7 +173,7 @@
     },
     "try": {
       "title": "Próbáld ki!",
-      "subtitle": "A Handy ott van a sarokban, és végigvezet rajta",
+      "subtitle": "A Voxa ott van a sarokban, és végigvezet rajta",
       "noteLabel": "Jegyzet",
       "placeholder": "Új jegyzet",
       "hold": "Tartsd lenyomva: <keys/>, és beszélj.",
@@ -198,14 +201,14 @@
     },
     "done": {
       "title": "Minden kész",
-      "subMac": "A Handy mostantól a menüsorban van. Bármelyik alkalmazásban tartsd lenyomva vagy koppints: <keys/>, és beszélj.",
-      "subTray": "A Handy mostantól a tálcán van. Bármelyik alkalmazásban tartsd lenyomva vagy koppints: <keys/>, és beszélj.",
+      "subMac": "A Voxa mostantól a menüsorban van. Bármelyik alkalmazásban tartsd lenyomva vagy koppints: <keys/>, és beszélj.",
+      "subTray": "A Voxa mostantól a tálcán van. Bármelyik alkalmazásban tartsd lenyomva vagy koppints: <keys/>, és beszélj.",
       "hint": "Ezeket később módosíthatod a Beállításokban",
       "highFiveLabel": "Pacsi",
-      "atLogin": "A Handy indítása bejelentkezéskor",
+      "atLogin": "A Voxa indítása bejelentkezéskor",
       "finish": "Kész",
       "panel": {
-        "name": "Handy",
+        "name": "Voxa",
         "ready": "Kész",
         "languages": "Nyelvek",
         "model": "Beszédmodell",
@@ -330,7 +333,7 @@
     "general": {
       "title": "Általános",
       "shortcut": {
-        "title": "Handy billentyűparancsok",
+        "title": "Voxa billentyűparancsok",
         "description": "Állítsd be a billentyűparancsokat, amelyek elindítják a beszédfelvételt és az átírást",
         "loading": "Billentyűparancsok betöltése...",
         "none": "Nincs beállított billentyűparancs",
@@ -372,7 +375,7 @@
       },
       "preferredLanguages": {
         "title": "Előnyben részesített nyelvek",
-        "description": "A nyelvek, amelyeken beszélsz. A Handy ezek alapján ajánl modelleket.",
+        "description": "A nyelvek, amelyeken beszélsz. A Voxa ezek alapján ajánl modelleket.",
         "noMatch": "Nincs találat erre: „{{query}}”",
         "weak": "Ezt egyik modell sem ismeri fel még jól: {{languages}}."
       },
@@ -399,17 +402,17 @@
         "fits": "A nyelveidhez",
         "untested": "Nem tesztelt"
       },
-      "untestedNote": "Nem teszteltük őket a Handyvel. Lassabbak lehetnek, vagy több hibát véthetnek.",
+      "untestedNote": "Nem teszteltük őket a Voxavel. Lassabbak lehetnek, vagy több hibát véthetnek.",
       "untestedHidden_one": "Még {{count}} modell nincs diktálásra hangolva. Kereséssel megtalálod.",
       "untestedHidden_other": "Még {{count}} modell nincs diktálásra hangolva. Kereséssel megtalálod őket.",
-      "emptyYours": "Még nincs modell. Válassz egyet lent: letöltődik, majd a Handy használja.",
+      "emptyYours": "Még nincs modell. Válassz egyet lent: letöltődik, majd a Voxa használja.",
       "showMore": "Még {{count}} megjelenítése",
       "showFewer": "Kevesebb megjelenítése",
       "download": "Letöltés és használat",
       "downloadingThenUse": "{{percent}}% letöltve ({{total}}), utána átvált",
       "loading": "Betöltés…",
       "deleteAsk": "Törlöd ezt: {{name}}? {{size}} szabadul fel.",
-      "deleteAskActive": "Törlöd ezt: {{name}}? A Handy nem tud átírni, amíg másikat nem választasz.",
+      "deleteAskActive": "Törlöd ezt: {{name}}? A Voxa nem tud átírni, amíg másikat nem választasz.",
       "cancel": "Mégse",
       "deleteModel": "Törlés: {{name}}",
       "cancelDownload": "Letöltés leállítása: {{name}}",
@@ -423,14 +426,14 @@
         "marks": "? még nem mértük. – nem érti az adott nyelvet."
       },
       "retiredNotice": {
-        "title": "A régi modellek már nem működnek a Handyvel",
+        "title": "A régi modellek már nem működnek a Voxavel",
         "description": "{{size}} helyet foglalnak a számítógépeden.",
         "delete": "Modellek törlése",
         "deleteFailed": "Néhány régi modellt nem sikerült törölni. A részleteket a naplóban találod."
       },
       "rescan": {
         "label": "Újrakeresés",
-        "tooltip": "A modellek mappájába vagy a Hugging Face gyorsítótárába a Handyn kívül hozzáadott modellek keresése"
+        "tooltip": "A modellek mappájába vagy a Hugging Face gyorsítótárába a Voxan kívül hozzáadott modellek keresése"
       }
     },
     "languages": {
@@ -500,11 +503,11 @@
       },
       "autostart": {
         "label": "Automatikus indítás",
-        "description": "A Handy automatikus indítása, amikor bejelentkezel a számítógépedre."
+        "description": "A Voxa automatikus indítása, amikor bejelentkezel a számítógépedre."
       },
       "showTrayIcon": {
         "label": "Tálcaikon megjelenítése",
-        "description": "A Handy ikonjának megjelenítése a tálcán."
+        "description": "A Voxa ikonjának megjelenítése a tálcán."
       },
       "overlay": {
         "style": {
@@ -741,7 +744,7 @@
       },
       "updateChecks": {
         "label": "Frissítések keresése",
-        "description": "A Handy új verzióinak automatikus keresése",
+        "description": "A Voxa új verzióinak automatikus keresése",
         "lockedDescription": "A rendszerkonfiguráció letiltotta (HANDY_DISABLE_UPDATER)"
       },
       "whatsNewPreview": {
@@ -847,7 +850,7 @@
       },
       "keyboardDiagnostic": {
         "title": "Billentyűzet-diagnosztika",
-        "description": "Ellenőrzi, eljutnak-e a billentyűesemények a Handyhez. Csak az események számát rögzíti, soha azt, hogy mely billentyűket nyomod meg.",
+        "description": "Ellenőrzi, eljutnak-e a billentyűesemények a Voxahez. Csak az események számát rögzíti, soha azt, hogy mely billentyűket nyomod meg.",
         "run": "10 mp-es diagnosztika futtatása",
         "running": "Figyelés… nyomd meg néhányszor a billentyűparancsodat (pl. Option+Space)",
         "secureInputLabel": "Biztonságos bevitel",
@@ -861,7 +864,7 @@
         "mouse": "Egér",
         "verdictBlocked": "A Biztonságos bevitel blokkolja a billentyűeseményeket, a billentyűparancsok nem működhetnek, amíg ez meg nem oldódik.",
         "verdictSuspicious": "Módosítóesemények érkeztek, de billentyűesemények nem: valami elnyeli a billentyűket, bár a Biztonságos bevitel kikapcsoltnak jelzi magát. Jelezd ezt a GitHubon.",
-        "verdictOk": "A billentyűesemények rendesen eljutnak a Handyhez.",
+        "verdictOk": "A billentyűesemények rendesen eljutnak a Voxahez.",
         "verdictNoEvents": "Nem érkezett esemény. Nyomtál meg billentyűket a teszt alatt?",
         "failed": "A diagnosztika sikertelen: {{error}}"
       }
@@ -870,15 +873,15 @@
       "title": "Névjegy",
       "version": {
         "title": "Verzió",
-        "description": "A Handy jelenlegi verziója"
+        "description": "A Voxa jelenlegi verziója"
       },
       "whatsNewUpdates": {
         "label": "Újdonságok megjelenítése",
-        "description": "A kiadási jegyzetek megjelenítése a Handy frissítései után"
+        "description": "A kiadási jegyzetek megjelenítése a Voxa frissítései után"
       },
       "appDataDirectory": {
         "title": "Alkalmazásadatok mappája",
-        "description": "A hely, ahol a Handy az adatait tárolja"
+        "description": "A hely, ahol a Voxa az adatait tárolja"
       },
       "sourceCode": {
         "title": "Forráskód",
@@ -887,7 +890,7 @@
       },
       "supportDevelopment": {
         "title": "A fejlesztés támogatása",
-        "description": "Segíts, hogy tovább építhessük a Handyt",
+        "description": "Segíts, hogy tovább építhessük a Voxat",
         "button": "Adományozás"
       },
       "acknowledgments": {
@@ -895,7 +898,7 @@
         "ggml": {
           "title": "ggml",
           "description": "Nagy teljesítményű tenzorkönyvtár gépi tanulási modellek eszközön történő futtatásához",
-          "details": "A Handy helyi beszédfelismerése a transcribe.cpp-re és a ggml-re épül. Köszönet Georgi Gerganov és a közreműködők csodálatos munkájáért."
+          "details": "A Voxa helyi beszédfelismerése a transcribe.cpp-re és a ggml-re épül. Köszönet Georgi Gerganov és a közreműködők csodálatos munkájáért."
         }
       }
     }
@@ -916,7 +919,7 @@
     "portableUpdateBrowseButton": "GitHub Releases megnyitása"
   },
   "whatsNew": {
-    "title": "A Handy v{{version}} újdonságai"
+    "title": "A Voxa v{{version}} újdonságai"
   },
   "common": {
     "playbackPosition": "Lejátszási pozíció",
@@ -943,7 +946,7 @@
     "microphoneSilentTitle": "A mikrofon néma",
     "microphoneSilent": "A mikrofonod csak csendet küldött. Ellenőrizd, hogy nincs-e némítva, vagy válassz másik mikrofont a Beállításokban.",
     "recordingFailedTitle": "A felvétel indítása sikertelen",
-    "modelLoadFailed": "A Handy nem tudta betölteni ezt a modellt. Próbáld újra, vagy válassz másikat.",
+    "modelLoadFailed": "A Voxa nem tudta betölteni ezt a modellt. Próbáld újra, vagy válassz másikat.",
     "modelLoadFailedTitle": "A modell betöltése sikertelen",
     "noModelSelected": "Tölts le vagy válassz modellt a Beállítások > Modellek részben.",
     "noModelSelectedTitle": "Nincs kiválasztott modell",
@@ -951,7 +954,7 @@
     "pasteFailedTitle": "A szöveg beillesztése sikertelen",
     "pasteFailed": "A szöveget nem sikerült beilleszteni az aktív alkalmazásba.",
     "pasteBlockedElevatedTitle": "Rendszergazdai alkalmazásba nem lehet beilleszteni",
-    "pasteBlockedElevated": "Az aktív alkalmazás rendszergazdaként fut, ezért a Handy nem tud beilleszteni bele. Az átiratot az Előzményekből másolhatod ki.",
+    "pasteBlockedElevated": "Az aktív alkalmazás rendszergazdaként fut, ezért a Voxa nem tud beilleszteni bele. Az átiratot az Előzményekből másolhatod ki.",
     "postProcessFailedTitle": "Beillesztve utófeldolgozás nélkül",
     "postProcessFailed": "Az utófeldolgozás nem fejeződött be, ezért az eredeti átirat lett beillesztve.",
     "filePostProcessFailedTitle": "Átírva utófeldolgozás nélkül",
@@ -968,11 +971,11 @@
   },
   "appLanguage": {
     "title": "Az alkalmazás nyelve",
-    "description": "A Handy felületének nyelve"
+    "description": "A Voxa felületének nyelve"
   },
   "theme": {
     "title": "Az alkalmazás témája",
-    "description": "Válaszd ki, hogy a Handy kövesse a rendszer témáját, vagy maradjon világos vagy sötét",
+    "description": "Válaszd ki, hogy a Voxa kövesse a rendszer témáját, vagy maradjon világos vagy sötét",
     "options": {
       "system": "Rendszer",
       "light": "Világos",

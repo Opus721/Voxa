@@ -1,0 +1,29 @@
+name: Windows x64
+
+# Unsigned Windows build for this fork. No signing secrets are required.
+# GitHub Actions must be enabled on the repository (Settings → Actions)
+# or this workflow never runs.
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+concurrency:
+  group: windows-x64-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yml
+    with:
+      platform: windows-latest
+      target: x86_64-pc-windows-msvc
+      build-args: ""
+      sign-binaries: false
+      upload-artifacts: true
+      asset-prefix: voxa-windows-x64
+      repository: ${{ github.repository }}
+      ref: ${{ github.ref }}
+    secrets: inherit

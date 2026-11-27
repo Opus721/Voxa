@@ -45,12 +45,22 @@ const NOTICE_PILL_CHROME = 49;
 
 const RecordingOverlay: React.FC = () => {
   const { t } = useTranslation();
-  const [isVisible, setIsVisible] = useState(false);
-  const [state, setState] = useState<OverlayState>("recording");
+  const previewMode =
+    typeof window === "undefined"
+      ? null
+      : new URLSearchParams(window.location.search).get("preview");
+  const [isVisible, setIsVisible] = useState(
+    previewMode === "recording" || previewMode === "transcribing",
+  );
+  const [state, setState] = useState<OverlayState>(
+    previewMode === "transcribing" ? "transcribing" : "recording",
+  );
   // `Stream::play()` returning does not mean hardware callbacks are flowing.
   // Stay visually in an arming state until the backend processes the first
   // actual microphone sample chunk.
-  const [captureReady, setCaptureReady] = useState(false);
+  const [captureReady, setCaptureReady] = useState(
+    previewMode === "recording" || previewMode === "transcribing",
+  );
   // Recording starts while the model loads in the background. Say so, otherwise
   // a cold start looks like an empty Live preview that ignores speech, then a
   // hung "Transcribing..." spinner. Once recording stops, any in-flight load is
@@ -62,14 +72,18 @@ const RecordingOverlay: React.FC = () => {
   // Latched per Live session: once the loading notice has opened the panel, keep
   // it open after the load so it doesn't collapse and reopen when text arrives.
   const [loadNoticeShown, setLoadNoticeShown] = useState(false);
-  const [levels, setLevels] = useState<number[]>(Array(WAVE_BARS).fill(0));
+  const [levels, setLevels] = useState<number[]>(
+    previewMode === "recording"
+      ? [0.3, 0.55, 0.85, 0.5, 1, 0.45, 0.75, 0.4, 0.65]
+      : Array(WAVE_BARS).fill(0),
+  );
   const [streamText, setStreamText] = useState<StreamTextEvent>({
     committed: "",
     tentative: "",
   });
   const [phase, setPhase] = useState<StreamPhase>("listening");
   const [workKind, setWorkKind] = useState<StreamWorkKind>("transcribing");
-  const [elapsed, setElapsed] = useState(0);
+  const [elapsed, setElapsed] = useState(previewMode ? 4 : 0);
   // Bumped on each new streaming session so the Live card remounts fresh (replays
   // the pop-in, and never animates in from the previous panel's open size).
   const [session, setSession] = useState(0);
