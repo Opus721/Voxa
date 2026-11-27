@@ -395,9 +395,9 @@
       },
       "closeButton": {
         "title": "Close Button Behavior",
-        "description": "The close button minimizes Voxa to the taskbar, or quits the app. Quit is also in the tray menu.",
+        "description": "The close button hides the window. It leaves the taskbar, and Voxa stays in the tray. Quit exits the app, and is also in the tray menu.",
         "options": {
-          "minimize": "Minimize to taskbar",
+          "hide": "Hide to tray",
           "quit": "Quit app"
         }
       }

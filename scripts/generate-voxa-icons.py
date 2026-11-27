@@ -4,10 +4,10 @@
 The master is src/assets/voxa-mark.svg: the italic V from Libre Bodoni,
 weight 600, outlined so generation does not need the font.
 
-Tiles larger than 48px use the medium bleed: the letter is scaled about
-20% past the left and bottom of a #09090a rounded square, matching
-design/voxa-mark-bodoni-bleed-2.svg. Tray glyphs and smaller tiles fit
-the whole letter inside the frame so it still reads at 16px.
+Every size, including the tray and the 16px exe frame, uses the medium
+bleed: the letter is scaled about 20% past the left and bottom of a
+#09090a rounded square, matching design/voxa-mark-bodoni-bleed-2.svg.
+There is no fitted-letter variant.
 """
 
 from __future__ import annotations
@@ -26,7 +26,6 @@ RES = ROOT / "src-tauri" / "resources"
 MARK = ROOT / "src" / "assets" / "voxa-mark.svg"
 
 WHITE = (255, 255, 255, 255)
-INK = (9, 9, 10, 255)
 ACCENT = (94, 106, 210, 255)
 AMBER = (232, 179, 57, 255)
 TILE = (9, 9, 10, 255)
@@ -35,8 +34,7 @@ TILE = (9, 9, 10, 255)
 BLEED_SCALE = 1.54151
 BLEED_TX = -204.80
 BLEED_TY = 48.00
-# At this size and below, a cropped letter stops reading. Fit it instead.
-SMALL_TILE = 48
+ICO_SIZES = [16, 20, 24, 32, 40, 48, 64, 256]
 
 
 def _tokenize(d: str) -> list[tuple[str, list[float]]]:
@@ -119,12 +117,6 @@ def mark_contours() -> list[list[tuple[float, float]]]:
     return _contours(_tokenize(match.group(1)))
 
 
-def _bbox(contours: list[list[tuple[float, float]]]) -> tuple[float, float, float, float]:
-    xs = [p[0] for c in contours for p in c]
-    ys = [p[1] for c in contours for p in c]
-    return min(xs), min(ys), max(xs), max(ys)
-
-
 def _map_points(contours, fn) -> list[list[tuple[float, float]]]:
     return [[fn(x, y) for x, y in contour] for contour in contours]
 
@@ -148,15 +140,6 @@ def paint_contours(canvas: Image.Image, contours, color, *, clip: bool) -> None:
     canvas.paste(color_layer, mask=mask)
 
 
-def fitted_contours(contours, size: int, fraction: float = 0.76):
-    x0, y0, x1, y1 = _bbox(contours)
-    gw, gh = x1 - x0, y1 - y0
-    scale = (size * fraction) / max(gw, gh)
-    ox = (size - gw * scale) / 2 - x0 * scale
-    oy = (size - gh * scale) / 2 - y0 * scale
-    return _map_points(contours, lambda x, y: (ox + x * scale, oy + y * scale))
-
-
 def bleed_contours(contours, size: int):
     """Medium bleed, scaled from the 1024px design tile."""
     k = size / 1024
@@ -166,21 +149,12 @@ def bleed_contours(contours, size: int):
     return _map_points(contours, lambda x, y: (x * scale + tx, y * scale + ty))
 
 
-def render(size: int, *, tile: bool, color, badge=None) -> Image.Image:
+def render(size: int, *, color, badge=None) -> Image.Image:
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     contours = mark_contours()
-    if tile:
-        radius = size * 0.22
-        ImageDraw.Draw(img).rounded_rectangle((0, 0, size - 1, size - 1), radius=radius, fill=TILE)
-        # Small tiles keep the whole letter. Larger tiles crop the left and bottom.
-        if size <= SMALL_TILE:
-            placed = fitted_contours(contours, size)
-            paint_contours(img, placed, color, clip=False)
-        else:
-            placed = bleed_contours(contours, size)
-            paint_contours(img, placed, color, clip=True)
-    else:
-        paint_contours(img, fitted_contours(contours, size), color, clip=False)
+    radius = size * 0.22
+    ImageDraw.Draw(img).rounded_rectangle((0, 0, size - 1, size - 1), radius=radius, fill=TILE)
+    paint_contours(img, bleed_contours(contours, size), color, clip=True)
     if badge is not None:
         d = max(3, int(size * 0.22))
         margin = max(1, int(size * 0.06))
@@ -201,8 +175,8 @@ def png_size(path: Path) -> tuple[int, int]:
 
 
 def write_ico(path: Path) -> None:
-    sizes = [16, 24, 32, 48, 64, 128, 256]
-    frames = [render(s, tile=True, color=WHITE) for s in sizes]
+    sizes = ICO_SIZES
+    frames = [render(s, color=WHITE) for s in sizes]
     frames[-1].save(
         path,
         format="ICO",
@@ -228,7 +202,7 @@ def write_icns(path: Path) -> None:
     icns = icnsutil.IcnsFile()
     for name, size in named.items():
         buf = io.BytesIO()
-        render(size, tile=True, color=WHITE).save(buf, format="PNG")
+        render(size, color=WHITE).save(buf, format="PNG")
         icns.add_media(file=name, data=buf.getvalue())
     icns.write(path)
 
@@ -237,36 +211,70 @@ def main() -> None:
     for path in ICONS.rglob("*.png"):
         w, h = png_size(path)
         side = max(w, h)
-        save_png(path, render(side, tile=True, color=WHITE).resize((w, h), Image.Resampling.LANCZOS))
+        save_png(path, render(side, color=WHITE).resize((w, h), Image.Resampling.LANCZOS))
 
-    master = render(1024, tile=True, color=WHITE)
+    master = render(1024, color=WHITE)
     save_png(ICONS / "icon.png", master)
     write_ico(ICONS / "icon.ico")
     write_icns(ICONS / "icon.icns")
 
+    # Light and dark files are the same bleed tile. Recording tints the letter;
+    # transcribing and warning keep a corner badge so the tray state still reads.
     pairs = {
         "tray_idle.png": (WHITE, None),
-        "tray_idle_dark.png": (INK, None),
+        "tray_idle_dark.png": (WHITE, None),
         "tray_recording.png": (ACCENT, None),
         "tray_recording_dark.png": (ACCENT, None),
         "tray_transcribing.png": (WHITE, ACCENT),
-        "tray_transcribing_dark.png": (INK, ACCENT),
+        "tray_transcribing_dark.png": (WHITE, ACCENT),
         "tray_idle_warning.png": (WHITE, AMBER),
-        "tray_idle_warning_dark.png": (INK, AMBER),
-        "handy.png": (ACCENT, None),
-        "handy_warning.png": (ACCENT, AMBER),
+        "tray_idle_warning_dark.png": (WHITE, AMBER),
+        "handy.png": (WHITE, None),
+        "handy_warning.png": (WHITE, AMBER),
         "recording.png": (ACCENT, None),
         "transcribing.png": (WHITE, ACCENT),
     }
     for name, (color, badge) in pairs.items():
-        save_png(RES / name, render(64, tile=False, color=color, badge=badge))
+        save_png(RES / name, render(64, color=color, badge=badge))
+
+    write_contact_sheet(ROOT / "design" / "voxa-icon-sizes.png")
 
     out = Path("/opt/cursor/artifacts")
     out.mkdir(parents=True, exist_ok=True)
-    save_png(out / "voxa-mark.png", render(256, tile=True, color=WHITE))
+    save_png(out / "voxa-mark.png", render(256, color=WHITE))
     save_png(out / "voxa-icon.png", master)
-    save_png(out / "voxa-tray-16.png", render(16, tile=False, color=WHITE).resize((160, 160), Image.Resampling.NEAREST))
+    save_png(out / "voxa-tray-16.png", render(16, color=WHITE).resize((160, 160), Image.Resampling.NEAREST))
+    save_png(out / "voxa-icon-sizes.png", Image.open(ROOT / "design" / "voxa-icon-sizes.png"))
     print("icons written")
+
+
+def write_contact_sheet(path: Path) -> None:
+    """Every shipped size, plus a nearest-neighbor zoom of the small ones."""
+    sizes = ICO_SIZES
+    zoom = 8
+    label_h = 28
+    pad = 24
+    cell = 256
+    cols = len(sizes)
+    width = pad + cols * (cell + pad)
+    height = pad + cell + label_h + pad + 16 * zoom + label_h + pad
+    sheet = Image.new("RGBA", (width, height), (24, 24, 27, 255))
+    draw = ImageDraw.Draw(sheet)
+    for i, size in enumerate(sizes):
+        icon = render(size, color=WHITE)
+        shown = icon.resize((cell, cell), Image.Resampling.NEAREST)
+        x = pad + i * (cell + pad)
+        sheet.paste(shown, (x, pad))
+        draw.text((x, pad + cell + 6), f"{size}px", fill=(255, 255, 255, 255))
+        if size <= 32:
+            big = icon.resize((size * zoom, size * zoom), Image.Resampling.NEAREST)
+            sheet.paste(big, (x, pad + cell + label_h + pad))
+            draw.text(
+                (x, pad + cell + label_h + pad + size * zoom + 4),
+                f"{size}px ×{zoom}",
+                fill=(180, 180, 186, 255),
+            )
+    save_png(path, sheet)
 
 
 if __name__ == "__main__":

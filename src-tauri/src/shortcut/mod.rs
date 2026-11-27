@@ -808,7 +808,7 @@ pub fn change_debug_mode_setting(app: AppHandle, enabled: bool) -> Result<(), St
 #[specta::specta]
 pub fn change_close_button_setting(app: AppHandle, behavior: String) -> Result<(), String> {
     let parsed = match behavior.as_str() {
-        "minimize" => CloseButtonBehavior::Minimize,
+        "hide" | "minimize" => CloseButtonBehavior::Hide,
         "quit" => CloseButtonBehavior::Quit,
         other => return Err(format!("Unknown close button behavior: {other}")),
     };

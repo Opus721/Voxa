@@ -2,7 +2,7 @@
 
 Sergei's pick from the display italics: Libre Bodoni Italic, weight 600 (Impallari Type, Pablo Impallari and Rodrigo Fuenzalida, SIL OFL 1.1). The letter is the outlined V in `voxa-mark-italic-4.svg`, and that path is now `src/assets/voxa-mark.svg`.
 
-Variant 2, the medium bleed, is the app tile: white on `#09090a`, about 20% past the left and bottom. `scripts/generate-voxa-icons.py` paints that crop on tiles larger than 48px. The tray, smaller tiles, and the sidebar use the same letter fitted inside the frame.
+Variant 2, the medium bleed, is every app icon: white on `#09090a`, about 20% past the left and bottom. `scripts/generate-voxa-icons.py` paints that crop at every size, including the exe frames and the tray. The sidebar letter is the same outlined V, drawn in the UI color.
 
 The three tiles draw that V large and toward the bottom-left, so the rounded square crops the left and bottom edges. The top-right serif stays inside.
 
@@ -12,7 +12,7 @@ The three tiles draw that V large and toward the bottom-left, so the rounded squ
 | 2   | About 20%. This is the app tile. `voxa-mark-bodoni-bleed-2.svg`    |
 | 3   | About 30%. `voxa-mark-bodoni-bleed-3.svg`                          |
 
-White and periwinkle `#8f97ff`, on `#09090a`. The sheet is `voxa-mark-bodoni-bleed-contact-sheet.png`. The 16px tray preview is the fitted letter, with no bleed: `voxa-mark-bodoni-tray-16.png`.
+White and periwinkle `#8f97ff`, on `#09090a`. The comparison sheet is `voxa-mark-bodoni-bleed-contact-sheet.png`. The shipped sizes, each one the medium bleed, are `voxa-icon-sizes.png`.
 
 # Sharp-style mark
 

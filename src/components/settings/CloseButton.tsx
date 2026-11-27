@@ -15,7 +15,7 @@ export const CloseButtonSetting: React.FC<CloseButtonProps> = React.memo(
     const { t } = useTranslation();
     const { getSetting, updateSetting, isUpdating } = useSettings();
     const selected = (getSetting("close_button") ??
-      "minimize") as CloseButtonBehavior;
+      "hide") as CloseButtonBehavior;
 
     return (
       <SettingContainer
@@ -27,8 +27,8 @@ export const CloseButtonSetting: React.FC<CloseButtonProps> = React.memo(
         <Dropdown
           options={[
             {
-              value: "minimize",
-              label: t("settings.general.closeButton.options.minimize"),
+              value: "hide",
+              label: t("settings.general.closeButton.options.hide"),
             },
             {
               value: "quit",

@@ -109,21 +109,25 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
-/// Close button on the main window. The default minimizes and leaves
-/// `skip_taskbar` false, so the window stays a taskbar button. Quit exits
-/// the process. The tray Quit item also exits, and does not use this path.
-/// `--start-hidden` does not either: a hidden launch stays off the taskbar
-/// until the user opens the window.
+/// Close button on the main window. The default hides the window and, on
+/// Windows, takes it off the taskbar. The process keeps running; the tray
+/// icon, the tray Settings item, and a second launch call `show_main_window`.
+/// Quit exits the process. The tray Quit item also exits, and does not use
+/// this path. `--start-hidden` does not either: a hidden launch stays off
+/// the taskbar until the user opens the window.
 fn handle_main_window_close(window: &tauri::Window) {
     let app = window.app_handle();
     let settings = get_settings(app);
     match settings.close_button {
-        settings::CloseButtonBehavior::Minimize => {
-            if let Err(e) = window.set_skip_taskbar(false) {
-                log::error!("Failed to keep the main window on the taskbar: {}", e);
+        settings::CloseButtonBehavior::Hide => {
+            // Drop the taskbar button before the window disappears. A later
+            // show puts it back.
+            #[cfg(target_os = "windows")]
+            if let Err(e) = window.set_skip_taskbar(true) {
+                log::error!("Failed to remove the main window from the taskbar: {}", e);
             }
-            if let Err(e) = window.minimize() {
-                log::error!("Failed to minimize the main window: {}", e);
+            if let Err(e) = window.hide() {
+                log::error!("Failed to hide the main window: {}", e);
             }
         }
         settings::CloseButtonBehavior::Quit => {
@@ -134,15 +138,15 @@ fn handle_main_window_close(window: &tauri::Window) {
 
 fn show_main_window(app: &AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
-        if let Err(e) = main_window.unminimize() {
-            log::error!("Failed to unminimize webview window: {}", e);
-        }
-        // A hidden or tray launch can leave the window off the taskbar.
-        // Showing it from a manual launch, the tray, or a second start
-        // puts the button back.
+        // Hiding from the close button sets skip_taskbar. A tray click, the
+        // tray Settings item, and a second launch put the button back, then
+        // show and focus the window.
         #[cfg(target_os = "windows")]
         if let Err(e) = main_window.set_skip_taskbar(false) {
             log::error!("Failed to keep the main window on the taskbar: {}", e);
+        }
+        if let Err(e) = main_window.unminimize() {
+            log::error!("Failed to unminimize webview window: {}", e);
         }
         if let Err(e) = main_window.show() {
             log::error!("Failed to show webview window: {}", e);
@@ -1184,7 +1188,7 @@ pub fn run(cli_args: CliArgs) {
 
             // A manual launch always shows the window. Only `--start-hidden`,
             // or `--autostart` with the minimized-at-login setting, leaves it
-            // hidden. The close button's minimize behavior does not apply
+            // hidden. The close button hides to the tray and does not apply
             // here: a hidden launch stays off the taskbar until the user
             // opens the window. Permission onboarding still forces it open.
             let should_hide = launch_should_hide(&cli_args, settings.start_hidden);
@@ -1215,8 +1219,8 @@ pub fn run(cli_args: CliArgs) {
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
                 // The tray Quit item calls app.exit(), which does not come
-                // through this handler. The close button can exit too, when
-                // the setting is Quit: that calls app.exit() after this.
+                // through this handler. The close button hides the window
+                // after prevent_close, or exits when the setting is Quit.
                 api.prevent_close();
                 if window.label() != "main" {
                     let _ = window.hide();

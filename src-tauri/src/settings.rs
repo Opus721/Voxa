@@ -429,8 +429,8 @@ pub struct AppSettings {
     /// Missing keys from older stores minimize at login.
     #[serde(default = "default_start_hidden")]
     pub start_hidden: bool,
-    /// Close button. Missing keys from older stores minimize, which keeps a
-    /// taskbar button. Quit is the tray menu, not this button.
+    /// Close button. A missing key hides the window and leaves only the tray
+    /// icon. Quit exits the process. The tray Quit item also exits.
     #[serde(default)]
     pub close_button: CloseButtonBehavior,
     #[serde(default = "default_autostart_enabled")]
@@ -616,9 +616,14 @@ fn default_start_hidden() -> bool {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum CloseButtonBehavior {
-    /// Minimize, and keep the window on the taskbar (or the Dock).
+    /// Hide the window and leave only the tray icon. On Windows the taskbar
+    /// button goes away until the window is shown again.
+    ///
+    /// `minimize` is the previous stored value. It now hides, so a store that
+    /// saved the old option does not keep a taskbar button.
     #[default]
-    Minimize,
+    #[serde(alias = "minimize")]
+    Hide,
     /// Exit the process.
     Quit,
 }
@@ -1043,7 +1048,7 @@ pub fn get_default_settings() -> AppSettings {
         audio_feedback_volume: default_audio_feedback_volume(),
         sound_theme: default_sound_theme(),
         start_hidden: default_start_hidden(),
-        close_button: CloseButtonBehavior::Minimize,
+        close_button: CloseButtonBehavior::Hide,
         autostart_enabled: default_autostart_enabled(),
         update_checks_enabled: default_update_checks_enabled(),
         show_whats_new_on_update: default_show_whats_new_on_update(),
@@ -1582,7 +1587,7 @@ mod tests {
         assert_eq!(settings.hold_threshold_ms, default_hold_threshold_ms());
         assert!(!settings.audio_feedback);
         assert!(settings.start_hidden);
-        assert_eq!(settings.close_button, CloseButtonBehavior::Minimize);
+        assert_eq!(settings.close_button, CloseButtonBehavior::Hide);
         assert_eq!(settings.sound_theme, SoundTheme::Voxa);
         assert_eq!(SoundTheme::Voxa.to_start_path(), "resources/voxa_start.wav");
         assert_eq!(SoundTheme::Voxa.to_stop_path(), "resources/voxa_stop.wav");
@@ -1593,6 +1598,10 @@ mod tests {
         let quit: AppSettings = serde_json::from_value(serde_json::json!({"close_button": "quit"}))
             .expect("quit close button still loads");
         assert_eq!(quit.close_button, CloseButtonBehavior::Quit);
+        let legacy: AppSettings =
+            serde_json::from_value(serde_json::json!({"close_button": "minimize"}))
+                .expect("the old minimize value still loads");
+        assert_eq!(legacy.close_button, CloseButtonBehavior::Hide);
         assert!(settings.filler_word_removal_enabled);
         // Bindings default to empty; the load path merges the real defaults in.
         assert!(settings.bindings.is_empty());

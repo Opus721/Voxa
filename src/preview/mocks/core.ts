@@ -9,7 +9,7 @@ const settings = {
   audio_feedback_volume: 0.5,
   sound_theme: "custom",
   start_hidden: true,
-  close_button: "minimize",
+  close_button: "hide",
   autostart_enabled: true,
   update_checks_enabled: false,
   show_whats_new_on_update: false,
