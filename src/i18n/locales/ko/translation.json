@@ -392,6 +392,14 @@
           "push_to_talk": "단축키를 누르고 있는 동안 녹음합니다",
           "toggle": "단축키를 탭하면 녹음을 시작하고, 다시 탭하면 중지합니다"
         }
+      },
+      "closeButton": {
+        "title": "Close Button Behavior",
+        "description": "The close button minimizes Voxa to the taskbar, or quits the app. Quit is also in the tray menu.",
+        "options": {
+          "minimize": "Minimize to taskbar",
+          "quit": "Quit app"
+        }
       }
     },
     "models": {

@@ -392,6 +392,14 @@
           "push_to_talk": "Neemt op zolang je de sneltoets ingedrukt houdt",
           "toggle": "Tik op de sneltoets om de opname te starten, tik opnieuw om te stoppen"
         }
+      },
+      "closeButton": {
+        "title": "Close Button Behavior",
+        "description": "The close button minimizes Voxa to the taskbar, or quits the app. Quit is also in the tray menu.",
+        "options": {
+          "minimize": "Minimize to taskbar",
+          "quit": "Quit app"
+        }
       }
     },
     "models": {

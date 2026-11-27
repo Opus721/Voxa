@@ -392,6 +392,14 @@
           "push_to_talk": "บันทึกเสียงระหว่างที่กดปุ่มลัดค้างไว้",
           "toggle": "กดปุ่มลัดครั้งเดียวเพื่อเริ่มบันทึกเสียง และกดอีกครั้งเพื่อหยุด"
         }
+      },
+      "closeButton": {
+        "title": "Close Button Behavior",
+        "description": "The close button minimizes Voxa to the taskbar, or quits the app. Quit is also in the tray menu.",
+        "options": {
+          "minimize": "Minimize to taskbar",
+          "quit": "Quit app"
+        }
       }
     },
     "models": {

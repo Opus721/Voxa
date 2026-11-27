@@ -392,6 +392,14 @@
           "push_to_talk": "ショートカットを押している間だけ録音します",
           "toggle": "ショートカットをタップすると録音を開始し、もう一度タップすると停止します"
         }
+      },
+      "closeButton": {
+        "title": "Close Button Behavior",
+        "description": "The close button minimizes Voxa to the taskbar, or quits the app. Quit is also in the tray menu.",
+        "options": {
+          "minimize": "Minimize to taskbar",
+          "quit": "Quit app"
+        }
       }
     },
     "models": {

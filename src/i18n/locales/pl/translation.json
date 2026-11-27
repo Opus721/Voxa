@@ -392,6 +392,14 @@
           "push_to_talk": "Nagrywa, dopóki trzymasz skrót",
           "toggle": "Dotknij skrótu, aby rozpocząć nagrywanie, dotknij ponownie, aby zatrzymać"
         }
+      },
+      "closeButton": {
+        "title": "Close Button Behavior",
+        "description": "The close button minimizes Voxa to the taskbar, or quits the app. Quit is also in the tray menu.",
+        "options": {
+          "minimize": "Minimize to taskbar",
+          "quit": "Quit app"
+        }
       }
     },
     "models": {

@@ -109,6 +109,29 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
+/// Close button on the main window. The default minimizes and leaves
+/// `skip_taskbar` false, so the window stays a taskbar button. Quit exits
+/// the process. The tray Quit item also exits, and does not use this path.
+/// `--start-hidden` does not either: a hidden launch stays off the taskbar
+/// until the user opens the window.
+fn handle_main_window_close(window: &tauri::Window) {
+    let app = window.app_handle();
+    let settings = get_settings(app);
+    match settings.close_button {
+        settings::CloseButtonBehavior::Minimize => {
+            if let Err(e) = window.set_skip_taskbar(false) {
+                log::error!("Failed to keep the main window on the taskbar: {}", e);
+            }
+            if let Err(e) = window.minimize() {
+                log::error!("Failed to minimize the main window: {}", e);
+            }
+        }
+        settings::CloseButtonBehavior::Quit => {
+            app.exit(0);
+        }
+    }
+}
+
 fn show_main_window(app: &AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
         if let Err(e) = main_window.unminimize() {
@@ -697,6 +720,7 @@ pub fn run(cli_args: CliArgs) {
             shortcut::change_sound_theme_setting,
             shortcut::change_theme_setting,
             shortcut::change_start_hidden_setting,
+            shortcut::change_close_button_setting,
             shortcut::change_autostart_setting,
             shortcut::change_translate_to_english_setting,
             shortcut::change_selected_language_setting,
@@ -1137,9 +1161,11 @@ pub fn run(cli_args: CliArgs) {
                 tray::set_tray_visibility(&app_handle, false);
             }
 
-            // Show main window only if not starting hidden.
-            // CLI --start-hidden flag overrides the setting.
-            // But if permission onboarding is required, always show the window.
+            // Show the main window only if not starting hidden.
+            // `--start-hidden` overrides the setting. The close button's
+            // minimize behavior does not apply here: a hidden launch stays
+            // off the taskbar until the user opens the window. Permission
+            // onboarding still forces the window open.
             let should_hide = settings.start_hidden || cli_args.start_hidden;
             let should_force_show = should_force_show_permissions_window(&app_handle);
 
@@ -1167,25 +1193,14 @@ pub fn run(cli_args: CliArgs) {
         })
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
+                // The tray Quit item calls app.exit(), which does not come
+                // through this handler. The close button never quits.
                 api.prevent_close();
-                let _res = window.hide();
-
-                #[cfg(target_os = "macos")]
-                {
-                    let settings = get_settings(window.app_handle());
-                    let tray_visible =
-                        settings.show_tray_icon && !window.app_handle().state::<CliArgs>().no_tray;
-                    if tray_visible {
-                        // Tray is available: hide the dock icon, app lives in the tray
-                        let res = window
-                            .app_handle()
-                            .set_activation_policy(tauri::ActivationPolicy::Accessory);
-                        if let Err(e) = res {
-                            log::error!("Failed to set activation policy: {}", e);
-                        }
-                    }
-                    // No tray: keep the dock icon visible so the user can reopen
+                if window.label() != "main" {
+                    let _ = window.hide();
+                    return;
                 }
+                handle_main_window_close(window);
             }
             tauri::WindowEvent::ThemeChanged(theme) => {
                 log::info!("Theme changed to: {:?}", theme);

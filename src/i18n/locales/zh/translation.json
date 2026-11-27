@@ -392,6 +392,14 @@
           "push_to_talk": "按住快捷键期间录音",
           "toggle": "轻按快捷键开始录音，再次轻按停止"
         }
+      },
+      "closeButton": {
+        "title": "Close Button Behavior",
+        "description": "The close button minimizes Voxa to the taskbar, or quits the app. Quit is also in the tray menu.",
+        "options": {
+          "minimize": "Minimize to taskbar",
+          "quit": "Quit app"
+        }
       }
     },
     "models": {

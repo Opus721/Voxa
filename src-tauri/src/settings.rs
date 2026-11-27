@@ -286,14 +286,18 @@ impl ModelUnloadTimeout {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "snake_case")]
 pub enum SoundTheme {
+    /// Bundled start/stop pair shipped with Voxa.
+    Voxa,
     Marimba,
     Pop,
+    /// `custom_start.wav` and `custom_stop.wav` in the app data directory.
     Custom,
 }
 
 impl SoundTheme {
     fn as_str(&self) -> &'static str {
         match self {
+            SoundTheme::Voxa => "voxa",
             SoundTheme::Marimba => "marimba",
             SoundTheme::Pop => "pop",
             SoundTheme::Custom => "custom",
@@ -422,6 +426,10 @@ pub struct AppSettings {
     pub sound_theme: SoundTheme,
     #[serde(default = "default_start_hidden")]
     pub start_hidden: bool,
+    /// Close button. Missing keys from older stores minimize, which keeps a
+    /// taskbar button. Quit is the tray menu, not this button.
+    #[serde(default)]
+    pub close_button: CloseButtonBehavior,
     #[serde(default = "default_autostart_enabled")]
     pub autostart_enabled: bool,
     #[serde(default = "default_update_checks_enabled")]
@@ -599,6 +607,17 @@ fn default_start_hidden() -> bool {
     false
 }
 
+/// What the main window's close button does. The tray Quit item always exits.
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum CloseButtonBehavior {
+    /// Minimize, and keep the window on the taskbar (or the Dock).
+    #[default]
+    Minimize,
+    /// Exit the process.
+    Quit,
+}
+
 fn default_autostart_enabled() -> bool {
     false
 }
@@ -704,7 +723,8 @@ fn default_audio_feedback_volume() -> f32 {
 }
 
 fn default_sound_theme() -> SoundTheme {
-    SoundTheme::Marimba
+    // New installs. A store that already names a theme keeps that value.
+    SoundTheme::Voxa
 }
 
 fn default_theme() -> Theme {
@@ -1018,6 +1038,7 @@ pub fn get_default_settings() -> AppSettings {
         audio_feedback_volume: default_audio_feedback_volume(),
         sound_theme: default_sound_theme(),
         start_hidden: default_start_hidden(),
+        close_button: CloseButtonBehavior::Minimize,
         autostart_enabled: default_autostart_enabled(),
         update_checks_enabled: default_update_checks_enabled(),
         show_whats_new_on_update: default_show_whats_new_on_update(),
@@ -1555,6 +1576,17 @@ mod tests {
         );
         assert_eq!(settings.hold_threshold_ms, default_hold_threshold_ms());
         assert!(!settings.audio_feedback);
+        assert_eq!(settings.close_button, CloseButtonBehavior::Minimize);
+        assert_eq!(settings.sound_theme, SoundTheme::Voxa);
+        assert_eq!(SoundTheme::Voxa.to_start_path(), "resources/voxa_start.wav");
+        assert_eq!(SoundTheme::Voxa.to_stop_path(), "resources/voxa_stop.wav");
+        let custom: AppSettings =
+            serde_json::from_value(serde_json::json!({"sound_theme": "custom"}))
+                .expect("custom sound theme still loads");
+        assert_eq!(custom.sound_theme, SoundTheme::Custom);
+        let quit: AppSettings = serde_json::from_value(serde_json::json!({"close_button": "quit"}))
+            .expect("quit close button still loads");
+        assert_eq!(quit.close_button, CloseButtonBehavior::Quit);
         assert!(settings.filler_word_removal_enabled);
         // Bindings default to empty; the load path merges the real defaults in.
         assert!(settings.bindings.is_empty());

@@ -392,6 +392,14 @@
           "push_to_talk": "Записва, докато държите комбинацията натисната",
           "toggle": "Натиснете кратко комбинацията, за да започне записът, и отново, за да спре"
         }
+      },
+      "closeButton": {
+        "title": "Close Button Behavior",
+        "description": "The close button minimizes Voxa to the taskbar, or quits the app. Quit is also in the tray menu.",
+        "options": {
+          "minimize": "Minimize to taskbar",
+          "quit": "Quit app"
+        }
       }
     },
     "models": {

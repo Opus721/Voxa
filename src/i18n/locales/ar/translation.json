@@ -392,6 +392,14 @@
           "push_to_talk": "يسجّل أثناء الضغط على الاختصار",
           "toggle": "انقر على الاختصار لبدء التسجيل، وانقر مرة أخرى للإيقاف"
         }
+      },
+      "closeButton": {
+        "title": "Close Button Behavior",
+        "description": "The close button minimizes Voxa to the taskbar, or quits the app. Quit is also in the tray menu.",
+        "options": {
+          "minimize": "Minimize to taskbar",
+          "quit": "Quit app"
+        }
       }
     },
     "models": {
