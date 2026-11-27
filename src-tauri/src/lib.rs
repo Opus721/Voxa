@@ -109,6 +109,30 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
+#[cfg(target_os = "windows")]
+fn set_windows_taskbar_icon(window: &tauri::WebviewWindow) -> anyhow::Result<()> {
+    use windows::Win32::Foundation::{LPARAM, WPARAM};
+    use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        LoadIconW, SendMessageW, ICON_BIG, IDI_APPLICATION, WM_SETICON,
+    };
+
+    // Tao sets ICON_SMALL for the title bar. Explorer also asks for
+    // ICON_BIG. Load the shared icon from Tauri's executable resource.
+    let hwnd = window.hwnd()?;
+    unsafe {
+        let module = GetModuleHandleW(None)?;
+        let icon = LoadIconW(Some(module.into()), IDI_APPLICATION)?;
+        SendMessageW(
+            hwnd,
+            WM_SETICON,
+            Some(WPARAM(ICON_BIG as usize)),
+            Some(LPARAM(icon.0 as isize)),
+        );
+    }
+    Ok(())
+}
+
 /// Close button on the main window. The default hides the window and, on
 /// Windows, takes it off the taskbar. The process keeps running; the tray
 /// icon, the tray Settings item, and a second launch call `show_main_window`.
@@ -1097,26 +1121,8 @@ pub fn run(cli_args: CliArgs) {
             let main_window = win_builder.build()?;
 
             #[cfg(target_os = "windows")]
-            {
-                use windows::Win32::Foundation::{LPARAM, WPARAM};
-                use windows::Win32::System::LibraryLoader::GetModuleHandleW;
-                use windows::Win32::UI::WindowsAndMessaging::{
-                    LoadIconW, SendMessageW, ICON_BIG, IDI_APPLICATION, WM_SETICON,
-                };
-
-                // Tao sets ICON_SMALL for the title bar. Explorer also asks for
-                // ICON_BIG. Load the shared icon from Tauri's executable resource.
-                let hwnd = main_window.hwnd()?;
-                unsafe {
-                    let module = GetModuleHandleW(None)?;
-                    let icon = LoadIconW(Some(module.into()), IDI_APPLICATION)?;
-                    SendMessageW(
-                        hwnd,
-                        WM_SETICON,
-                        Some(WPARAM(ICON_BIG as usize)),
-                        Some(LPARAM(icon.0 as isize)),
-                    );
-                }
+            if let Err(error) = set_windows_taskbar_icon(&main_window) {
+                log::warn!("Could not set the Voxa taskbar icon: {error}");
             }
 
             // macOS draws the title bar inside the inner size; grow the window to fit it.

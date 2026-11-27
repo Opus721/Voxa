@@ -858,6 +858,10 @@ Section Install
     ${OrIf} ${Silent}
       Call CreateOrUpdateDesktopShortcut
     ${EndIf}
+
+    ; The executable keeps the same path across upgrades. Tell Explorer to
+    ; refresh its cached images after the executable and shortcuts are in place.
+    System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
   ${EndIf} ; --- END PORTABLE MODE guard ---
 
   !ifmacrodef NSIS_HOOK_POSTINSTALL
