@@ -1,13 +1,15 @@
 # Libre Bodoni bleed
 
-Sergei's pick from the display italics: Libre Bodoni Italic, weight 600 (Impallari Type, Pablo Impallari and Rodrigo Fuenzalida, SIL OFL 1.1). The letter is the outlined V already in `voxa-mark-italic-4.svg`. It is not wired into the app.
+Sergei's pick from the display italics: Libre Bodoni Italic, weight 600 (Impallari Type, Pablo Impallari and Rodrigo Fuenzalida, SIL OFL 1.1). The letter is the outlined V in `voxa-mark-italic-4.svg`, and that path is now `src/assets/voxa-mark.svg`.
+
+Variant 2, the medium bleed, is the app tile: white on `#09090a`, about 20% past the left and bottom. `scripts/generate-voxa-icons.py` paints that crop on tiles larger than 48px. The tray, smaller tiles, and the sidebar use the same letter fitted inside the frame.
 
 The three tiles draw that V large and toward the bottom-left, so the rounded square crops the left and bottom edges. The top-right serif stays inside.
 
 |     | Placement                                                          |
 | --- | ------------------------------------------------------------------ |
 | 1   | About 10% past the left and bottom. `voxa-mark-bodoni-bleed-1.svg` |
-| 2   | About 20%. `voxa-mark-bodoni-bleed-2.svg`                          |
+| 2   | About 20%. This is the app tile. `voxa-mark-bodoni-bleed-2.svg`    |
 | 3   | About 30%. `voxa-mark-bodoni-bleed-3.svg`                          |
 
 White and periwinkle `#8f97ff`, on `#09090a`. The sheet is `voxa-mark-bodoni-bleed-contact-sheet.png`. The 16px tray preview is the fitted letter, with no bleed: `voxa-mark-bodoni-tray-16.png`.
@@ -18,7 +20,7 @@ Previous direction. A, B, and C are drawn by hand as vector paths. They are not 
 
 The reference is the wide, heavy V on the Sharp Type homepage type tester: flared, cupped wedge terminals, a sharp bottom point, and a heavier left stroke. These drawings follow that spirit.
 
-The wired-in mark is still the Instrument Serif italic V in `src/assets/voxa-mark.svg`. None of these files is connected to the app.
+None of these files is connected to the app. The wired mark is the Libre Bodoni V.
 
 |     | Drawing                                                                             |
 | --- | ----------------------------------------------------------------------------------- |

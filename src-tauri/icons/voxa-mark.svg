@@ -1,4 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 508.0 746.0" fill="currentColor">
-  <!-- Italic V from Instrument Serif (Instrument, SIL OFL 1.1). Outlined; the app does not ship the font. -->
-  <path d="M88.0 738.0Q84.0 738.0 80.0 735.0Q76.0 732.0 76.0 722.0L65.0 88.0Q64.0 60.0 58.0 49.0Q52.0 38.0 33.0 34.0L20.0 31.0Q8.0 28.0 8.0 19.0Q8.0 8.0 25.0 8.0L190.0 8.0Q203.0 8.0 203.0 18.0Q203.0 29.0 183.0 31.0L163.0 33.0Q146.0 34.0 139.5 43.5Q133.0 53.0 133.0 75.0L138.0 548.0Q138.0 558.0 144.0 559.0Q150.0 560.0 154.0 552.0L373.0 96.0Q401.0 39.0 355.0 33.0L341.0 31.0Q326.0 28.0 326.0 19.0Q326.0 8.0 343.0 8.0L488.0 8.0Q500.0 8.0 500.0 18.0Q500.0 27.0 484.0 31.0L468.0 34.0Q448.0 38.0 434.0 53.5Q420.0 69.0 406.0 97.0L107.0 722.0Q103.0 732.0 97.5 735.0Q92.0 738.0 88.0 738.0Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 679.7 766" fill="currentColor">
+  <!-- Libre Bodoni Italic capital V, weight 600, outlined.
+       Pablo Impallari and Rodrigo Fuenzalida, Impallari Type. SIL OFL 1.1.
+       Source: https://github.com/googlefonts/Libre-Bodoni
+       scripts/generate-voxa-icons.py paints the app tile from this path:
+       tiles above 48px use the medium bleed (about 20% past the left and
+       bottom, white on #09090a); tray glyphs and smaller tiles fit the letter. -->
+  <path d="M58.7 766.0L190.0 539.7L570.3 20.0L608.0 20.0L67.0 766.0ZM37.3 766.0L79.0 10.0L228.7 10.0L189.0 535.7L193.0 535.7L65.0 766.0ZM0.0 28.3L0.0 0.0L302.3 0.0L302.3 28.3ZM461.7 28.3L461.7 0.0L679.7 0.0L679.7 28.3Z"/>
 </svg>
