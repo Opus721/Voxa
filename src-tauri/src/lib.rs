@@ -999,6 +999,17 @@ pub fn run(cli_args: CliArgs) {
         .manage(cli_args.clone())
         .manage(notices::NoticeStore::default())
         .setup(move |app| {
+            // Match the NSIS shortcuts so Explorer groups Voxa separately from
+            // Handy while both products retain their existing settings path.
+            #[cfg(target_os = "windows")]
+            unsafe {
+                use windows::core::w;
+                use windows::Win32::UI::Shell::SetCurrentProcessExplicitAppUserModelID;
+                if let Err(error) = SetCurrentProcessExplicitAppUserModelID(w!("Opus721.Voxa")) {
+                    log::warn!("Failed to set the Voxa taskbar identity: {error}");
+                }
+            }
+
             #[cfg(target_os = "windows")]
             log::info!(
                 "Vulkan layer policy: VK_LOADER_LAYERS_DISABLE={:?}, HANDY_KEEP_VULKAN_IMPLICIT_LAYERS={}",

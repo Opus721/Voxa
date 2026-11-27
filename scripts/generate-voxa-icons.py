@@ -25,8 +25,6 @@ MARK = ROOT / "src" / "assets" / "voxa-mark.svg"
 MASTER_PNG = ROOT / "design" / "voxa-mark-bodoni-bleed-2.png"
 
 WHITE = (255, 255, 255, 255)
-ACCENT = (94, 106, 210, 255)
-AMBER = (232, 179, 57, 255)
 TILE = (9, 9, 10, 255)
 
 # Placement copied from design/voxa-mark-bodoni-bleed-2.svg (1024px master).
@@ -192,54 +190,6 @@ def downscale(master: Image.Image, size: int, cache: dict[int, Image.Image]) -> 
     return img.copy()
 
 
-def tint_letter(img: Image.Image, color: tuple[int, int, int, int]) -> Image.Image:
-    """Recolor the white letter. The tile, the rounded alpha, and the edges stay."""
-    src = img.convert("RGBA")
-    pixels = bytearray(src.tobytes())
-    cr, cg, cb = color[:3]
-    tr, tg, tb = TILE[:3]
-    span = 255 - tr
-    for i in range(0, len(pixels), 4):
-        r, g, b, a = pixels[i : i + 4]
-        if a == 0:
-            continue
-        excess = max(r - tr, g - tg, b - tb, 0)
-        t = excess / span
-        if t > 1:
-            t = 1.0
-        pixels[i] = int(tr + (cr - tr) * t)
-        pixels[i + 1] = int(tg + (cg - tg) * t)
-        pixels[i + 2] = int(tb + (cb - tb) * t)
-    return Image.frombytes("RGBA", src.size, bytes(pixels))
-
-
-def add_badge(img: Image.Image, color: tuple[int, int, int, int]) -> Image.Image:
-    out = img.copy()
-    size = out.size[0]
-    d = max(3, int(size * 0.22))
-    margin = max(1, int(size * 0.06))
-    x1 = size - margin
-    y1 = size - margin
-    ImageDraw.Draw(out).ellipse((x1 - d, y1 - d, x1, y1), fill=color)
-    return out
-
-
-def tray_image(
-    master: Image.Image,
-    cache: dict[int, Image.Image],
-    size: int,
-    *,
-    color,
-    badge,
-) -> Image.Image:
-    img = downscale(master, size, cache)
-    if color != WHITE:
-        img = tint_letter(img, color)
-    if badge is not None:
-        img = add_badge(img, badge)
-    return img
-
-
 def save_png(path: Path, image: Image.Image) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     image.convert("RGBA").save(path, "PNG", optimize=True)
@@ -328,37 +278,16 @@ def main() -> None:
     write_ico(ICONS / "icon.ico", frames)
     write_icns(ICONS / "icon.icns", cache, master)
 
-    # Light and dark files are the same downscale. Recording tints the letter;
-    # transcribing and warning draw a corner badge on top of it.
-    pairs = {
-        "tray_idle.png": (WHITE, None),
-        "tray_idle_dark.png": (WHITE, None),
-        "tray_recording.png": (ACCENT, None),
-        "tray_recording_dark.png": (ACCENT, None),
-        "tray_transcribing.png": (WHITE, ACCENT),
-        "tray_transcribing_dark.png": (WHITE, ACCENT),
-        "tray_idle_warning.png": (WHITE, AMBER),
-        "tray_idle_warning_dark.png": (WHITE, AMBER),
-        "handy.png": (WHITE, None),
-        "handy_warning.png": (WHITE, AMBER),
-        "recording.png": (ACCENT, None),
-        "transcribing.png": (WHITE, ACCENT),
-    }
-    for name, (color, badge) in pairs.items():
-        save_png(RES / name, tray_image(master, cache, 64, color=color, badge=badge))
+    # Windows can display any tray state as the shell icon.
+    tray = downscale(master, 64, cache)
+    for path in sorted(RES.glob("tray_*.png")):
+        save_png(path, tray)
+    for name in ("handy.png", "handy_warning.png", "recording.png", "transcribing.png"):
+        save_png(RES / name, tray)
 
     sheet = write_contact_sheet(master, cache)
     save_png(ROOT / "design" / "voxa-icon-sizes.png", sheet)
 
-    out = Path("/opt/cursor/artifacts")
-    out.mkdir(parents=True, exist_ok=True)
-    save_png(out / "voxa-icon.png", master)
-    save_png(out / "voxa-mark.png", downscale(master, 256, cache))
-    save_png(
-        out / "voxa-tray-16.png",
-        downscale(master, 16, cache).resize((160, 160), Image.Resampling.NEAREST),
-    )
-    save_png(out / "voxa-icon-sizes.png", sheet)
     print("icons written")
 
 

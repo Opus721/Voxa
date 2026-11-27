@@ -107,6 +107,8 @@ tauri-plugin-single-instance = "2.3.2"
 tauri-plugin-updater = "2.10.1"
 
 [target.'cfg(windows)'.dependencies]
+# Stock Handy uses the unsuffixed single-instance mutex for the shared identifier.
+tauri-plugin-single-instance = { version = "2.3.2", features = ["semver"] }
 # Used to reach ICoreWebView2Settings3 through the webview's controller
 # (disabling browser accelerator keys in the main window). Must match the
 # version wry links against so the COM types are identical.
@@ -124,6 +126,7 @@ windows = { version = "0.61.3", features = [
   "Win32_System_Variant",
   "Win32_Foundation",
   "Win32_Graphics_Gdi",
+  "Win32_UI_Shell",
   "Win32_UI_WindowsAndMessaging",
 ] }
 winreg = "0.55"

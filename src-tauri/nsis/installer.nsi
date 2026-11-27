@@ -50,7 +50,9 @@ ${StrLoc}
 !define HEADERIMAGE "{{header_image}}"
 !define MAINBINARYNAME "{{main_binary_name}}"
 !define MAINBINARYSRCPATH "{{main_binary_path}}"
-!define BUNDLEID "{{bundle_id}}"
+; Shell identity is separate from the shared Handy data directory.
+!define BUNDLEID "Opus721.Voxa"
+!define DATAID "{{bundle_id}}"
 !define COPYRIGHT "{{copyright}}"
 !define OUTFILE "{{out_file}}"
 !define ARCH "{{arch}}"
@@ -213,6 +215,31 @@ Function PageInstallType
   nsDialogs::Show
 FunctionEnd
 
+!macro CheckTargetExecutable
+  ; Handy has the same executable name in another directory. A mapped EXE
+  ; rejects write access. Never terminate processes by basename.
+  ${If} ${FileExists} "$INSTDIR\${MAINBINARYNAME}.exe"
+    ${Do}
+      ClearErrors
+      FileOpen $0 "$INSTDIR\${MAINBINARYNAME}.exe" a
+      ${IfNot} ${Errors}
+        FileClose $0
+        ${ExitDo}
+      ${EndIf}
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Close Voxa and retry. Setup needs write access to $INSTDIR\${MAINBINARYNAME}.exe." /SD IDCANCEL IDRETRY +2
+      Abort
+    ${Loop}
+  ${EndIf}
+!macroend
+
+!macro NormalUserInstallDir
+  ${If} ${FileExists} "D:\*.*"
+    StrCpy $INSTDIR "D:\Apps\${PRODUCTNAME}"
+  ${Else}
+    StrCpy $INSTDIR "$LOCALAPPDATA\${PRODUCTNAME}"
+  ${EndIf}
+!macroend
+
 Function PageLeaveInstallType
   ${NSD_GetState} $InstallTypeRadioPortable $0
   ${If} $0 = ${BST_CHECKED}
@@ -220,13 +247,14 @@ Function PageLeaveInstallType
     ; --- PORTABLE MODE --- Switch default directory to Desktop\Handy for portable
     ${If} $INSTDIR == "${PLACEHOLDER_INSTALL_DIR}"
     ${OrIf} $INSTDIR == "$LOCALAPPDATA\${PRODUCTNAME}"
+    ${OrIf} $INSTDIR == "D:\Apps\${PRODUCTNAME}"
       StrCpy $INSTDIR "$DESKTOP\${PRODUCTNAME}"
     ${EndIf}
   ${Else}
     StrCpy $PortableMode 0
     ; Restore normal default if user switched back from portable
     ${If} $INSTDIR == "$DESKTOP\${PRODUCTNAME}"
-      StrCpy $INSTDIR "$LOCALAPPDATA\${PRODUCTNAME}"
+      !insertmacro NormalUserInstallDir
     ${EndIf}
   ${EndIf}
 FunctionEnd
@@ -574,7 +602,7 @@ Function .onInit
         StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCTNAME}"
       ${EndIf}
     !else if "${INSTALLMODE}" == "currentUser"
-      StrCpy $INSTDIR "$LOCALAPPDATA\${PRODUCTNAME}"
+      !insertmacro NormalUserInstallDir
     !endif
 
     ; --- PORTABLE MODE --- Override default dir for silent/passive portable installs
@@ -729,7 +757,7 @@ Section Install
     !insertmacro NSIS_HOOK_PREINSTALL
   !endif
 
-  !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
+  !insertmacro CheckTargetExecutable
 
   ; Copy main executable
   File "${MAINBINARYSRCPATH}"
@@ -881,7 +909,7 @@ Section Uninstall
     !insertmacro NSIS_HOOK_PREUNINSTALL
   !endif
 
-  !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
+  !insertmacro CheckTargetExecutable
 
   ; Delete the app directory and its content from disk
   ; Copy main executable
@@ -981,8 +1009,8 @@ Section Uninstall
     DeleteRegKey /ifempty HKCU "${MANUKEY}"
 
     SetShellVarContext current
-    RmDir /r "$APPDATA\${BUNDLEID}"
-    RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
+    RmDir /r "$APPDATA\${DATAID}"
+    RmDir /r "$LOCALAPPDATA\${DATAID}"
   ${EndIf}
 
   !ifmacrodef NSIS_HOOK_POSTUNINSTALL
@@ -1028,6 +1056,7 @@ Function CreateOrUpdateStartMenuShortcut
   Pop $0
   ${If} $0 = 1
     !insertmacro SetShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
     StrCpy $R0 1
   ${EndIf}
 
@@ -1035,6 +1064,7 @@ Function CreateOrUpdateStartMenuShortcut
   Pop $0
   ${If} $0 = 1
     !insertmacro SetShortcutTarget "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\${PRODUCTNAME}.lnk"
     StrCpy $R0 1
   ${EndIf}
 
@@ -1068,6 +1098,7 @@ Function CreateOrUpdateDesktopShortcut
   Pop $0
   ${If} $0 = 1
     !insertmacro SetShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    !insertmacro SetLnkAppUserModelId "$DESKTOP\${PRODUCTNAME}.lnk"
     Return
   ${EndIf}
 

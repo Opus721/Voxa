@@ -19,14 +19,6 @@ use crate::utils::{is_gnome_wayland, is_kde_wayland, is_wayland};
 /// the user's clipboard. Only taken by `paste`, which never runs on the main thread.
 static PASTE_LOCK: Mutex<()> = Mutex::new(());
 
-/// How long a paste waits for the user to release modifier keys before sending
-/// its keystrokes anyway.
-const MODIFIER_RELEASE_TIMEOUT: Duration = Duration::from_millis(1000);
-/// Extra pause after the hardware state clears, so the foreground app can
-/// process the key-up before the paste chord. Without it, a fast Ctrl+V can
-/// still land as a lone "v" while right Ctrl is in the middle of releasing.
-const MODIFIER_RELEASE_SETTLE: Duration = Duration::from_millis(40);
-
 /// Runs `f` with the shared Enigo on the main thread (macOS TIS APIs require it)
 /// and waits for the result. Runs inline if already on the main thread, so no deadlock.
 fn with_enigo<T: Send + 'static>(
@@ -128,6 +120,8 @@ fn paste_via_clipboard(
     // Capture key injection errors so the original clipboard is restored before
     // propagating them to the caller.
     let paste_result = (|| -> Result<(), String> {
+        input::wait_for_modifiers_released()?;
+
         // Send paste key combo
         #[cfg(target_os = "linux")]
         let key_combo_sent = try_send_key_combo_linux(paste_method);
@@ -947,18 +941,13 @@ fn paste_as_configured(
         paste_method, paste_delay_ms, paste_delay_after_ms
     );
 
-    // The shortcut's modifiers may still be held when the transcript is ready.
-    // Keys sent now would combine with them (#2051, #595).
-    if sends_keys(paste_method) {
-        input::wait_for_modifiers_released(MODIFIER_RELEASE_TIMEOUT, MODIFIER_RELEASE_SETTLE);
-    }
-
     // Perform the paste operation
     match paste_method {
         PasteMethod::None => {
             info!("PasteMethod::None selected - skipping paste action");
         }
         PasteMethod::Direct => {
+            input::wait_for_modifiers_released()?;
             paste_direct(
                 &text,
                 &app_handle,
@@ -974,6 +963,7 @@ fn paste_as_configured(
             // the legacy path untouched.
             #[cfg(any(target_os = "macos", target_os = "windows"))]
             if settings.reliable_paste {
+                input::wait_for_modifiers_released()?;
                 // Runs entirely on the main thread, as it requires.
                 let (text, app) = (text.clone(), app_handle.clone());
                 let (auto_submit, auto_submit_key, clipboard_handling) = (

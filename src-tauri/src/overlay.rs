@@ -462,6 +462,23 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
     #[allow(unused_variables)]
     match builder.build() {
         Ok(window) => {
+            #[cfg(target_os = "windows")]
+            if let Ok(hwnd) = window.hwnd() {
+                use windows::Win32::UI::WindowsAndMessaging::{
+                    GetWindowLongW, SetWindowLongW, GWL_EXSTYLE, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW,
+                };
+                // The overlay is shown with SetWindowPos(SWP_SHOWWINDOW).
+                // Mark it as a tool window before its first show so Explorer
+                // also excludes it when rebuilding the taskbar.
+                unsafe {
+                    let style = GetWindowLongW(hwnd, GWL_EXSTYLE) as u32;
+                    SetWindowLongW(
+                        hwnd,
+                        GWL_EXSTYLE,
+                        ((style & !WS_EX_APPWINDOW.0) | WS_EX_TOOLWINDOW.0) as i32,
+                    );
+                }
+            }
             #[cfg(target_os = "linux")]
             {
                 // Try to initialize GTK layer shell, ignore errors if compositor doesn't support it

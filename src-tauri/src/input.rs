@@ -198,58 +198,47 @@ fn physical_modifiers_held() -> bool {
     false
 }
 
-/// Polls `held` until it reports false or `timeout` passes.
+/// Require a continuous key-up interval. A modifier pressed again during the
+/// settle period starts that period over.
 fn wait_until_released(
     mut held: impl FnMut() -> bool,
     timeout: std::time::Duration,
     poll: std::time::Duration,
-) -> (std::time::Duration, bool) {
+    settle: std::time::Duration,
+) -> bool {
     let start = std::time::Instant::now();
+    let mut clear_since = None;
     loop {
-        if !held() {
-            return (start.elapsed(), true);
+        if held() {
+            clear_since = None;
+        } else if clear_since
+            .get_or_insert_with(std::time::Instant::now)
+            .elapsed()
+            >= settle
+        {
+            return true;
         }
         if start.elapsed() >= timeout {
-            return (start.elapsed(), false);
+            return false;
         }
         std::thread::sleep(poll);
     }
 }
 
-/// Waits until modifier keys are up before Voxa sends keystrokes.
-///
-/// A fast transcription can be ready while the shortcut's modifier (right
-/// Ctrl, fn, …) is still physically down. Injecting Ctrl+V then is delivered
-/// as a bare `v`, or as a chord the target ignores
-/// ([Handy #2051](https://github.com/cjpais/Handy/issues/2051), #595).
-///
-/// After the hardware state clears, waits `settle` so the target app can
-/// process the key-up before the paste chord. Gives up after `timeout` so a
-/// key held on purpose cannot block the paste.
-///
-/// Sleeps. Call it from a worker thread, never the main thread.
-pub fn wait_for_modifiers_released(timeout: std::time::Duration, settle: std::time::Duration) {
-    let (waited, released) = wait_until_released(
-        physical_modifiers_held,
-        timeout,
-        std::time::Duration::from_millis(10),
-    );
-    if !released {
-        log::warn!(
-            "Modifier keys still held after {}ms; sending keystrokes anyway",
-            waited.as_millis()
-        );
-        return;
+/// Called on the paste worker. Propagate failure to the normal paste notice
+/// instead of injecting into a physically held shortcut.
+pub fn wait_for_modifiers_released() -> Result<(), String> {
+    if cfg!(any(target_os = "windows", target_os = "macos"))
+        && !wait_until_released(
+            physical_modifiers_held,
+            std::time::Duration::from_secs(5),
+            std::time::Duration::from_millis(10),
+            std::time::Duration::from_millis(40),
+        )
+    {
+        return Err("Modifier keys still held; paste cancelled".into());
     }
-    if !waited.is_zero() {
-        log::info!(
-            "Waited {}ms for modifier keys to be released before pasting",
-            waited.as_millis()
-        );
-        // The key-up can still be queued in the foreground app after
-        // GetAsyncKeyState / CGEventSourceFlagsState first reports clear.
-        std::thread::sleep(settle);
-    }
+    Ok(())
 }
 
 /// Get the current mouse cursor position using the managed Enigo instance.
@@ -377,33 +366,37 @@ mod tests {
     use std::time::Duration;
 
     #[test]
-    fn returns_at_once_when_nothing_is_held() {
-        let (waited, released) =
-            wait_until_released(|| false, Duration::from_secs(1), Duration::from_millis(1));
-        assert!(released);
-        assert!(waited < Duration::from_millis(50));
+    fn accepts_released_keys() {
+        assert!(wait_until_released(
+            || false,
+            Duration::from_secs(1),
+            Duration::from_millis(1),
+            Duration::ZERO,
+        ));
     }
 
     #[test]
-    fn waits_until_keys_are_released() {
+    fn waits_through_a_second_press() {
         let mut polls = 0;
-        let (_, released) = wait_until_released(
+        assert!(wait_until_released(
             || {
                 polls += 1;
-                polls < 4
+                polls == 1 || polls == 3
             },
             Duration::from_secs(1),
             Duration::from_millis(1),
-        );
-        assert!(released);
-        assert_eq!(polls, 4);
+            Duration::from_millis(20),
+        ));
+        assert!(polls > 3);
     }
 
     #[test]
-    fn gives_up_after_timeout() {
-        let (waited, released) =
-            wait_until_released(|| true, Duration::from_millis(30), Duration::from_millis(5));
-        assert!(!released);
-        assert!(waited >= Duration::from_millis(30));
+    fn rejects_a_held_modifier_on_timeout() {
+        assert!(!wait_until_released(
+            || true,
+            Duration::from_millis(30),
+            Duration::from_millis(5),
+            Duration::ZERO,
+        ));
     }
 }
