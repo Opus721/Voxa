@@ -185,8 +185,7 @@ fn show_windows_overlay(window: &tauri::WebviewWindow) -> Result<(), String> {
             SetWindowLongW(hwnd, GWL_EXSTYLE, overlay_style as i32);
             flags |= SWP_FRAMECHANGED;
         }
-        SetWindowPos(hwnd, Some(HWND_TOPMOST), 0, 0, 0, 0, flags)
-            .map_err(|error| error.to_string())
+        SetWindowPos(hwnd, Some(HWND_TOPMOST), 0, 0, 0, 0, flags).map_err(|error| error.to_string())
     }
 }
 
