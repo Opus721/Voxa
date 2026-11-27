@@ -1,3 +1,25 @@
+# Sharp-style mark
+
+Current direction. A, B, and C are drawn by hand as vector paths. They are not outlines of a Sharp Type font, and this repo does not include a Sharp Type font file.
+
+The reference is the wide, heavy V on the Sharp Type homepage type tester: flared, cupped wedge terminals, a sharp bottom point, and a heavier left stroke. These drawings follow that spirit.
+
+The wired-in mark is still the Instrument Serif italic V in `src/assets/voxa-mark.svg`. None of these files is connected to the app.
+
+|     | Drawing                                                                             |
+| --- | ----------------------------------------------------------------------------------- |
+| A   | Upright. `voxa-mark-sharp-A.svg`                                                    |
+| B   | Slanted 11 degrees. `voxa-mark-sharp-B.svg`                                         |
+| C   | The same italic, larger than the rounded tile, so the terminals and the point crop. |
+
+White and periwinkle `#8f97ff`, on a `#09090a` tile. The sheet is `voxa-mark-sharp-contact-sheet.png`.
+
+The 16px tray previews are the fitted letters, A and B, with no bleed. C is cropped by the tile, so it is the wrong source for a tray glyph. At 16px both fitted letters still read as a V. A is the clearer of the two.
+
+# Earlier options
+
+The script and display-italic sheets below are previous directions. They are not the current candidates.
+
 # Script mark options
 
 Comparison only. The wired-in mark is still the Instrument Serif italic V in `src/assets/voxa-mark.svg`. Each SVG is the capital V converted to vector paths, so the app does not need the font.
