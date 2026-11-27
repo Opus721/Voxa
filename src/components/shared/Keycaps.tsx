@@ -44,7 +44,9 @@ export const Keycaps: React.FC<KeycapsProps> = ({
     : partial
       ? "border-dashed bg-transparent text-ink-2 border-edge"
       : `bg-control text-text border-edge ${
-          lift ? "group-hover/keycaps:bg-hover group-hover/keycaps:text-emphasis" : ""
+          lift
+            ? "group-hover/keycaps:bg-hover group-hover/keycaps:text-emphasis"
+            : ""
         }`;
 
   return (

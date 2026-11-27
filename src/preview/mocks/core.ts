@@ -83,9 +83,7 @@ const settings = {
   },
 };
 
-const model = (
-  extra: Record<string, unknown>,
-): Record<string, unknown> => ({
+const model = (extra: Record<string, unknown>): Record<string, unknown> => ({
   source: {
     HuggingFace: {
       repo_id: "handy-computer/whisper-medium-gguf",

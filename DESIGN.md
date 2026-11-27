@@ -19,23 +19,23 @@ Dark is the designed theme. Light uses the same roles, inverted, so the theme to
 
 Defined as CSS variables in `src/styles/theme.css` and registered for Tailwind in `src/App.css`. Dark values are Buba’s `--lin-*` names.
 
-| Token | Dark | Light | Role |
-| --- | --- | --- | --- |
-| `--color-frame` | `#09090a` | `#f3f3f4` | Window and sidebar |
-| `--color-panel` | `#121213` | `#ffffff` | Main column |
-| `--color-card` | `#1a1a1b` | `#ffffff` | Grouped settings surface |
-| `--color-control` | `#232325` | `#ececee` | Selected nav, inputs, secondary buttons |
-| `--color-hover` | `rgba(255,255,255,0.045)` | `rgba(0,0,0,0.04)` | Row and nav hover |
-| `--color-line` | `#1c1d1f` | `#ececee` | Dividers inside a group |
-| `--color-edge` | `#28292c` | `#e4e4e6` | 1px group and field border |
-| `--color-edge-strong` | `#34353a` | `#d0d0d3` | Hovered field border |
-| `--color-text` | `#e3e4e6` | `#1b1c1e` | Primary text |
-| `--color-emphasis` | `#ffffff` | `#1b1c1e` | Selected nav label |
-| `--color-ink-2` | `#939496` | `#6f7074` | Secondary text, idle icons |
-| `--color-ink-3` | `#636468` | `#8d8e93` | Tertiary text |
-| `--color-accent` | `#5e6ad2` | `#5e6ad2` | Switch on, primary button, focus |
-| `--color-accent-text` | `#a9b4ff` | `#3d4ac4` | Links |
-| `--color-menu` | `#212122` | `#ffffff` | Menus |
+| Token                 | Dark                      | Light              | Role                                    |
+| --------------------- | ------------------------- | ------------------ | --------------------------------------- |
+| `--color-frame`       | `#09090a`                 | `#f3f3f4`          | Window and sidebar                      |
+| `--color-panel`       | `#121213`                 | `#ffffff`          | Main column                             |
+| `--color-card`        | `#1a1a1b`                 | `#ffffff`          | Grouped settings surface                |
+| `--color-control`     | `#232325`                 | `#ececee`          | Selected nav, inputs, secondary buttons |
+| `--color-hover`       | `rgba(255,255,255,0.045)` | `rgba(0,0,0,0.04)` | Row and nav hover                       |
+| `--color-line`        | `#1c1d1f`                 | `#ececee`          | Dividers inside a group                 |
+| `--color-edge`        | `#28292c`                 | `#e4e4e6`          | 1px group and field border              |
+| `--color-edge-strong` | `#34353a`                 | `#d0d0d3`          | Hovered field border                    |
+| `--color-text`        | `#e3e4e6`                 | `#1b1c1e`          | Primary text                            |
+| `--color-emphasis`    | `#ffffff`                 | `#1b1c1e`          | Selected nav label                      |
+| `--color-ink-2`       | `#939496`                 | `#6f7074`          | Secondary text, idle icons              |
+| `--color-ink-3`       | `#636468`                 | `#8d8e93`          | Tertiary text                           |
+| `--color-accent`      | `#5e6ad2`                 | `#5e6ad2`          | Switch on, primary button, focus        |
+| `--color-accent-text` | `#a9b4ff`                 | `#3d4ac4`          | Links                                   |
+| `--color-menu`        | `#212122`                 | `#ffffff`          | Menus                                   |
 
 Type: Inter (bundled, latin, latin-ext, cyrillic). 12 / 13 / 14px. Weights 400 body, 500 UI, 600 for the wordmark only.
 

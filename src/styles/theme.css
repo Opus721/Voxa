@@ -46,9 +46,21 @@
   --color-line-strong: var(--color-edge-strong);
   --color-plum-pick: var(--color-edge-strong);
   --color-plum-faint: var(--color-edge);
-  --color-moss-wash: color-mix(in srgb, var(--color-moss) 14%, var(--color-panel));
-  --color-warning-wash: color-mix(in srgb, var(--color-warning) 14%, var(--color-panel));
-  --color-error-wash: color-mix(in srgb, var(--color-error) 14%, var(--color-panel));
+  --color-moss-wash: color-mix(
+    in srgb,
+    var(--color-moss) 14%,
+    var(--color-panel)
+  );
+  --color-warning-wash: color-mix(
+    in srgb,
+    var(--color-warning) 14%,
+    var(--color-panel)
+  );
+  --color-error-wash: color-mix(
+    in srgb,
+    var(--color-error) 14%,
+    var(--color-panel)
+  );
 
   --color-demo-window: var(--color-panel);
   --color-demo-lid: #0f0e10;
@@ -90,9 +102,21 @@
     --color-mascot-line: var(--color-text);
     --color-wash: var(--color-hover);
     --color-line-strong: var(--color-edge-strong);
-    --color-moss-wash: color-mix(in srgb, var(--color-moss) 12%, var(--color-panel));
-    --color-warning-wash: color-mix(in srgb, var(--color-warning) 12%, var(--color-panel));
-    --color-error-wash: color-mix(in srgb, var(--color-error) 12%, var(--color-panel));
+    --color-moss-wash: color-mix(
+      in srgb,
+      var(--color-moss) 12%,
+      var(--color-panel)
+    );
+    --color-warning-wash: color-mix(
+      in srgb,
+      var(--color-warning) 12%,
+      var(--color-panel)
+    );
+    --color-error-wash: color-mix(
+      in srgb,
+      var(--color-error) 12%,
+      var(--color-panel)
+    );
     --color-demo-lid: #1f1e21;
     --color-demo-alu-hi: #ececee;
     --color-demo-alu-lo: #d0d0d3;
@@ -128,9 +152,21 @@
   --color-mascot-line: var(--color-text);
   --color-wash: var(--color-hover);
   --color-line-strong: var(--color-edge-strong);
-  --color-moss-wash: color-mix(in srgb, var(--color-moss) 12%, var(--color-panel));
-  --color-warning-wash: color-mix(in srgb, var(--color-warning) 12%, var(--color-panel));
-  --color-error-wash: color-mix(in srgb, var(--color-error) 12%, var(--color-panel));
+  --color-moss-wash: color-mix(
+    in srgb,
+    var(--color-moss) 12%,
+    var(--color-panel)
+  );
+  --color-warning-wash: color-mix(
+    in srgb,
+    var(--color-warning) 12%,
+    var(--color-panel)
+  );
+  --color-error-wash: color-mix(
+    in srgb,
+    var(--color-error) 12%,
+    var(--color-panel)
+  );
   --color-demo-lid: #1f1e21;
   --color-demo-alu-hi: #ececee;
   --color-demo-alu-lo: #d0d0d3;
@@ -165,9 +201,21 @@
   --color-mascot-line: var(--color-text);
   --color-wash: var(--color-hover);
   --color-line-strong: var(--color-edge-strong);
-  --color-moss-wash: color-mix(in srgb, var(--color-moss) 14%, var(--color-panel));
-  --color-warning-wash: color-mix(in srgb, var(--color-warning) 14%, var(--color-panel));
-  --color-error-wash: color-mix(in srgb, var(--color-error) 14%, var(--color-panel));
+  --color-moss-wash: color-mix(
+    in srgb,
+    var(--color-moss) 14%,
+    var(--color-panel)
+  );
+  --color-warning-wash: color-mix(
+    in srgb,
+    var(--color-warning) 14%,
+    var(--color-panel)
+  );
+  --color-error-wash: color-mix(
+    in srgb,
+    var(--color-error) 14%,
+    var(--color-panel)
+  );
   --color-demo-lid: #0f0e10;
   --color-demo-alu-hi: #3a3b3e;
   --color-demo-alu-lo: #222326;
