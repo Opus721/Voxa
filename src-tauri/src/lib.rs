@@ -1096,6 +1096,29 @@ pub fn run(cli_args: CliArgs) {
             )]
             let main_window = win_builder.build()?;
 
+            #[cfg(target_os = "windows")]
+            {
+                use windows::Win32::Foundation::{LPARAM, WPARAM};
+                use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+                use windows::Win32::UI::WindowsAndMessaging::{
+                    LoadIconW, SendMessageW, ICON_BIG, IDI_APPLICATION, WM_SETICON,
+                };
+
+                // Tao sets ICON_SMALL for the title bar. Explorer also asks for
+                // ICON_BIG. Load the shared icon from Tauri's executable resource.
+                let hwnd = main_window.hwnd()?;
+                unsafe {
+                    let module = GetModuleHandleW(None)?;
+                    let icon = LoadIconW(Some(module.into()), IDI_APPLICATION)?;
+                    SendMessageW(
+                        hwnd,
+                        WM_SETICON,
+                        Some(WPARAM(ICON_BIG as usize)),
+                        Some(LPARAM(icon.0 as isize)),
+                    );
+                }
+            }
+
             // macOS draws the title bar inside the inner size; grow the window to fit it.
             #[cfg(target_os = "macos")]
             {
