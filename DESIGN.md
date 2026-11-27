@@ -41,4 +41,4 @@ Type: Inter (bundled, latin, latin-ext, cyrillic). 12 / 13 / 14px. Weights 400 b
 
 Radius: 6px controls and nav, 8px groups and menus, 10px the recording overlay.
 
-The mark is `src/assets/voxa-mark.svg`: one geometric V, `currentColor`, drawn to read at 16px.
+The mark is `src/assets/voxa-mark.svg`: the italic V from Instrument Serif (Instrument, SIL OFL 1.1), outlined so the app does not depend on the font. License: `src/assets/fonts/InstrumentSerif-OFL.txt`.
