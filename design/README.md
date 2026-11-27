@@ -1,6 +1,20 @@
+# Libre Bodoni bleed
+
+Sergei's pick from the display italics: Libre Bodoni Italic, weight 600 (Impallari Type, Pablo Impallari and Rodrigo Fuenzalida, SIL OFL 1.1). The letter is the outlined V already in `voxa-mark-italic-4.svg`. It is not wired into the app.
+
+The three tiles draw that V large and toward the bottom-left, so the rounded square crops the left and bottom edges. The top-right serif stays inside.
+
+|     | Placement                                                          |
+| --- | ------------------------------------------------------------------ |
+| 1   | About 10% past the left and bottom. `voxa-mark-bodoni-bleed-1.svg` |
+| 2   | About 20%. `voxa-mark-bodoni-bleed-2.svg`                          |
+| 3   | About 30%. `voxa-mark-bodoni-bleed-3.svg`                          |
+
+White and periwinkle `#8f97ff`, on `#09090a`. The sheet is `voxa-mark-bodoni-bleed-contact-sheet.png`. The 16px tray preview is the fitted letter, with no bleed: `voxa-mark-bodoni-tray-16.png`.
+
 # Sharp-style mark
 
-Current direction. A, B, and C are drawn by hand as vector paths. They are not outlines of a Sharp Type font, and this repo does not include a Sharp Type font file.
+Previous direction. A, B, and C are drawn by hand as vector paths. They are not outlines of a Sharp Type font, and this repo does not include a Sharp Type font file.
 
 The reference is the wide, heavy V on the Sharp Type homepage type tester: flared, cupped wedge terminals, a sharp bottom point, and a heavier left stroke. These drawings follow that spirit.
 
