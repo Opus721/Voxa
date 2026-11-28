@@ -96,6 +96,7 @@ const settingUpdaters: {
     commands.changeAudioFeedbackVolumeSetting(value as number),
   sound_theme: (value) => commands.changeSoundThemeSetting(value as string),
   start_hidden: (value) => commands.changeStartHiddenSetting(value as boolean),
+  close_button: (value) => commands.changeCloseButtonSetting(value as string),
   autostart_enabled: (value) =>
     commands.changeAutostartSetting(value as boolean),
   spoken_languages: (value) =>

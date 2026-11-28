@@ -213,6 +213,7 @@ fn windows_taskbar_theme() -> Option<AppTheme> {
 /// `badge` marks the idle icon while something needs attention (a notice, or
 /// macOS Secure Input). Busy states keep their normal icons. The menu line says
 /// what's wrong, so the badge doesn't vary by level.
+#[cfg(not(target_os = "windows"))]
 pub fn get_icon_path(theme: AppTheme, state: TrayIconState, badge: bool) -> &'static str {
     if badge && state == TrayIconState::Idle {
         return match theme {
@@ -234,6 +235,35 @@ pub fn get_icon_path(theme: AppTheme, state: TrayIconState, badge: bool) -> &'st
         (AppTheme::Colored, TrayIconState::Idle) => "resources/handy.png",
         (AppTheme::Colored, TrayIconState::Recording) => "resources/recording.png",
         (AppTheme::Colored, TrayIconState::Transcribing) => "resources/transcribing.png",
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_icon_path(_theme: AppTheme, _state: TrayIconState, _badge: bool) -> &'static str {
+    use windows::core::w;
+    use windows::Win32::UI::HiDpi::{GetDpiForSystem, GetDpiForWindow, GetSystemMetricsForDpi};
+    use windows::Win32::UI::WindowsAndMessaging::{FindWindowW, SM_CXSMICON};
+
+    // The primary taskbar owns the notification area, including its overflow.
+    let size = unsafe {
+        let dpi = FindWindowW(w!("Shell_TrayWnd"), None)
+            .map(|hwnd| GetDpiForWindow(hwnd))
+            .ok()
+            .filter(|dpi| *dpi > 0)
+            .unwrap_or_else(|| GetDpiForSystem());
+        GetSystemMetricsForDpi(SM_CXSMICON, dpi)
+    };
+    match size {
+        ..=16 => "resources/windows-tray/16.png",
+        17..=20 => "resources/windows-tray/20.png",
+        21..=24 => "resources/windows-tray/24.png",
+        25..=28 => "resources/windows-tray/28.png",
+        29..=32 => "resources/windows-tray/32.png",
+        33..=36 => "resources/windows-tray/36.png",
+        37..=40 => "resources/windows-tray/40.png",
+        41..=48 => "resources/windows-tray/48.png",
+        49..=56 => "resources/windows-tray/56.png",
+        _ => "resources/windows-tray/64.png",
     }
 }
 
@@ -616,9 +646,9 @@ pub fn tray_tooltip() -> String {
 
 fn version_label() -> String {
     if cfg!(debug_assertions) {
-        format!("Handy v{} (Dev)", env!("CARGO_PKG_VERSION"))
+        format!("Voxa v{} (Dev)", env!("CARGO_PKG_VERSION"))
     } else {
-        format!("Handy v{}", env!("CARGO_PKG_VERSION"))
+        format!("Voxa v{}", env!("CARGO_PKG_VERSION"))
     }
 }
 
@@ -1037,6 +1067,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         for theme in [AppTheme::Dark, AppTheme::Light, AppTheme::Colored] {
             let badged = get_icon_path(theme.clone(), TrayIconState::Idle, true);
+            #[cfg(not(target_os = "windows"))]
             assert_ne!(
                 badged,
                 get_icon_path(theme.clone(), TrayIconState::Idle, false)

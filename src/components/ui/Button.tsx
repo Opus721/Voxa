@@ -21,35 +21,27 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseClasses =
-    "font-medium rounded-lg border focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
+    "font-medium rounded-[6px] border border-transparent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
 
   const variantClasses = {
-    primary:
-      "text-white bg-background-ui border-background-ui hover:bg-background-ui/80 hover:border-background-ui/80 focus:ring-1 focus:ring-background-ui",
+    primary: "text-white bg-accent hover:bg-accent-hover",
     "primary-soft":
-      "text-text bg-logo-primary/20 border-transparent hover:bg-logo-primary/20 focus:ring-1 focus:ring-logo-primary",
+      "text-accent-text bg-accent/15 hover:bg-accent/20 focus-visible:ring-accent",
     secondary:
-      "bg-wash border-line hover:bg-logo-primary/20 hover:border-logo-primary focus:outline-none",
-    // For screens where secondary's grey fill reads as disabled (onboarding)
+      "text-text bg-control border-edge hover:bg-hover hover:border-edge-strong",
     outline:
-      "text-text bg-background border-line-strong hover:border-plum focus-visible:ring-1 focus-visible:ring-logo-primary",
-    // Secondary's neutral resting look, but hover/focus use the semantic
-    // --color-warning token (theme.css) instead of the pink accent — for
-    // buttons sitting on warning surfaces like SecureInputWarning
+      "text-text bg-panel border-edge hover:border-edge-strong focus-visible:ring-accent",
     warning:
-      "text-text bg-wash border-line hover:bg-warning-wash hover:border-warning focus:ring-1 focus:ring-warning",
-    danger:
-      "text-background bg-error border-error hover:bg-error/80 hover:border-error/80 focus:ring-1 focus:ring-error",
-    "danger-ghost":
-      "text-error border-transparent hover:bg-error-wash focus:bg-error-wash",
-    ghost:
-      "text-current border-transparent hover:bg-wash hover:border-logo-primary focus:bg-line",
+      "text-text bg-control border-edge hover:bg-warning-wash hover:border-warning",
+    danger: "text-white bg-error border-error hover:bg-error/80",
+    "danger-ghost": "text-error hover:bg-error-wash",
+    ghost: "text-ink-2 hover:bg-hover hover:text-text",
   };
 
   const sizeClasses = {
-    sm: "px-2 py-1 text-xs",
-    md: "px-4 py-[5px] text-sm",
-    lg: "px-4 py-2 text-base",
+    sm: "h-6 px-2 text-[12px]",
+    md: "h-[30px] px-2.5 text-[13px]",
+    lg: "h-8 px-3 text-[13px]",
   };
 
   return (

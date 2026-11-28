@@ -23,9 +23,9 @@ interface KeycapsProps {
 }
 
 const SIZES = {
-  sm: "h-[30px] min-w-[30px] px-[9px] rounded-[7px] text-small",
-  screen: "h-[24px] min-w-[24px] px-[7px] rounded-[6px] text-[11px]",
-  line: "h-[25px] min-w-[25px] px-[7px] rounded-[6px] text-[13px]",
+  sm: "h-[22px] min-w-[22px] px-1.5 rounded-[5px] text-[12px]",
+  screen: "h-[22px] min-w-[22px] px-1.5 rounded-[5px] text-[11px]",
+  line: "h-[20px] min-w-[20px] px-1.5 rounded-[5px] text-[12px]",
 };
 
 /** A shortcut binding drawn as physical keycaps. */
@@ -40,12 +40,12 @@ export const Keycaps: React.FC<KeycapsProps> = ({
 }) => {
   const labels = keycapLabels(binding, osType);
   const state = pressed
-    ? "translate-y-[3px] shadow-none bg-plum text-background border-plum"
+    ? "bg-hover text-emphasis border-edge-strong"
     : partial
-      ? "translate-y-[3px] shadow-none border-dashed bg-background text-plum border-plum"
-      : `shadow-[0_3px_0_0_var(--color-plum)] bg-background text-plum border-plum ${
+      ? "border-dashed bg-transparent text-ink-2 border-edge"
+      : `bg-control text-text border-edge ${
           lift
-            ? "group-hover/keycaps:-translate-y-[2px] group-hover/keycaps:shadow-[0_5px_0_0_var(--color-plum)] group-focus-visible/keycaps:-translate-y-[2px] group-focus-visible/keycaps:shadow-[0_5px_0_0_var(--color-plum)]"
+            ? "group-hover/keycaps:bg-hover group-hover/keycaps:text-emphasis"
             : ""
         }`;
 
@@ -59,7 +59,7 @@ export const Keycaps: React.FC<KeycapsProps> = ({
         <span
           key={i}
           aria-hidden="true"
-          className={`relative inline-flex items-center justify-center border font-display font-semibold leading-none select-none transition-[transform,box-shadow,background-color] duration-[70ms] ease-out ${SIZES[size]} ${state}`}
+          className={`relative inline-flex items-center justify-center border font-ui font-medium leading-none select-none transition-colors duration-150 ${SIZES[size]} ${state}`}
         >
           {label}
         </span>

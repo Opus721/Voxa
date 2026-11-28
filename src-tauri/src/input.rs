@@ -158,6 +158,90 @@ impl EnigoState {
     }
 }
 
+/// Whether the user is physically holding a modifier (Shift, Ctrl, Alt, Win,
+/// or macOS fn / Command). Reads the hardware state, so keys this process
+/// injects do not count.
+#[cfg(target_os = "macos")]
+fn physical_modifiers_held() -> bool {
+    #[link(name = "CoreGraphics", kind = "framework")]
+    unsafe extern "C" {
+        fn CGEventSourceFlagsState(state_id: i32) -> u64;
+    }
+    const HID_SYSTEM_STATE: i32 = 1;
+    const SHIFT: u64 = 0x0002_0000;
+    const CONTROL: u64 = 0x0004_0000;
+    const OPTION: u64 = 0x0008_0000;
+    const COMMAND: u64 = 0x0010_0000;
+    const FN: u64 = 0x0080_0000;
+
+    let flags = unsafe { CGEventSourceFlagsState(HID_SYSTEM_STATE) };
+    flags & (SHIFT | CONTROL | OPTION | COMMAND | FN) != 0
+}
+
+#[cfg(target_os = "windows")]
+fn physical_modifiers_held() -> bool {
+    #[link(name = "user32")]
+    unsafe extern "system" {
+        fn GetAsyncKeyState(vkey: i32) -> i16;
+    }
+    // VK_SHIFT, VK_CONTROL, VK_MENU (Alt), VK_LWIN, VK_RWIN.
+    const MODIFIERS: [i32; 5] = [0x10, 0x11, 0x12, 0x5B, 0x5C];
+    crate::shortcut::handy_keys::dictation_shortcut_held()
+        || MODIFIERS.iter().any(|&vk| {
+            let state = unsafe { GetAsyncKeyState(vk) };
+            (state as u16) & 0x8000 != 0
+        })
+}
+
+/// Linux has no portable way to read the physical keyboard state.
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn physical_modifiers_held() -> bool {
+    false
+}
+
+/// Require a continuous key-up interval. A modifier pressed again during the
+/// settle period starts that period over.
+fn wait_until_released(
+    mut held: impl FnMut() -> bool,
+    timeout: std::time::Duration,
+    poll: std::time::Duration,
+    settle: std::time::Duration,
+) -> bool {
+    let start = std::time::Instant::now();
+    let mut clear_since = None;
+    loop {
+        if held() {
+            clear_since = None;
+        } else if clear_since
+            .get_or_insert_with(std::time::Instant::now)
+            .elapsed()
+            >= settle
+        {
+            return true;
+        }
+        if start.elapsed() >= timeout {
+            return false;
+        }
+        std::thread::sleep(poll);
+    }
+}
+
+/// Called on the paste worker. Propagate failure to the normal paste notice
+/// instead of injecting into a physically held shortcut.
+pub fn wait_for_modifiers_released() -> Result<(), String> {
+    if cfg!(any(target_os = "windows", target_os = "macos"))
+        && !wait_until_released(
+            physical_modifiers_held,
+            std::time::Duration::from_secs(5),
+            std::time::Duration::from_millis(10),
+            std::time::Duration::from_millis(40),
+        )
+    {
+        return Err("Modifier keys still held; paste cancelled".into());
+    }
+    Ok(())
+}
+
 /// Get the current mouse cursor position using the managed Enigo instance.
 /// Returns None if the state is not available or if getting the location fails.
 pub fn get_cursor_position(app_handle: &AppHandle) -> Option<(i32, i32)> {
@@ -275,4 +359,45 @@ pub fn paste_text_direct(enigo: &mut Enigo, text: &str) -> Result<(), String> {
         .map_err(|e| format!("Failed to send text directly: {}", e))?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wait_until_released;
+    use std::time::Duration;
+
+    #[test]
+    fn accepts_released_keys() {
+        assert!(wait_until_released(
+            || false,
+            Duration::from_secs(1),
+            Duration::from_millis(1),
+            Duration::ZERO,
+        ));
+    }
+
+    #[test]
+    fn waits_through_a_second_press() {
+        let mut polls = 0;
+        assert!(wait_until_released(
+            || {
+                polls += 1;
+                polls == 1 || polls == 3
+            },
+            Duration::from_secs(1),
+            Duration::from_millis(1),
+            Duration::from_millis(20),
+        ));
+        assert!(polls > 3);
+    }
+
+    #[test]
+    fn rejects_a_held_modifier_on_timeout() {
+        assert!(!wait_until_released(
+            || true,
+            Duration::from_millis(30),
+            Duration::from_millis(5),
+            Duration::ZERO,
+        ));
+    }
 }

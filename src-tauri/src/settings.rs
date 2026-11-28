@@ -1,4 +1,3 @@
-use crate::utils;
 use log::{debug, warn};
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -287,14 +286,18 @@ impl ModelUnloadTimeout {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "snake_case")]
 pub enum SoundTheme {
+    /// Bundled start/stop pair shipped with Voxa.
+    Voxa,
     Marimba,
     Pop,
+    /// `custom_start.wav` and `custom_stop.wav` in the app data directory.
     Custom,
 }
 
 impl SoundTheme {
     fn as_str(&self) -> &'static str {
         match self {
+            SoundTheme::Voxa => "voxa",
             SoundTheme::Marimba => "marimba",
             SoundTheme::Pop => "pop",
             SoundTheme::Custom => "custom",
@@ -421,8 +424,15 @@ pub struct AppSettings {
     pub audio_feedback_volume: f32,
     #[serde(default = "default_sound_theme")]
     pub sound_theme: SoundTheme,
+    /// When Windows (or the OS login item) starts Voxa with `--autostart`,
+    /// hide the window and stay in the tray. A manual launch ignores this.
+    /// Missing keys from older stores minimize at login.
     #[serde(default = "default_start_hidden")]
     pub start_hidden: bool,
+    /// Close button. A missing key hides the window and leaves only the tray
+    /// icon. Quit exits the process. The tray Quit item also exits.
+    #[serde(default)]
+    pub close_button: CloseButtonBehavior,
     #[serde(default = "default_autostart_enabled")]
     pub autostart_enabled: bool,
     #[serde(default = "default_update_checks_enabled")]
@@ -597,7 +607,25 @@ fn default_translate_to_english() -> bool {
 }
 
 fn default_start_hidden() -> bool {
-    false
+    // New installs start minimized when the login item launches Voxa. A store
+    // that already saved this flag keeps its value.
+    true
+}
+
+/// What the main window's close button does. The tray Quit item always exits.
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum CloseButtonBehavior {
+    /// Hide the window and leave only the tray icon. On Windows the taskbar
+    /// button goes away until the window is shown again.
+    ///
+    /// `minimize` is the previous stored value. It now hides, so a store that
+    /// saved the old option does not keep a taskbar button.
+    #[default]
+    #[serde(alias = "minimize")]
+    Hide,
+    /// Exit the process.
+    Quit,
 }
 
 fn default_autostart_enabled() -> bool {
@@ -605,7 +633,9 @@ fn default_autostart_enabled() -> bool {
 }
 
 fn default_update_checks_enabled() -> bool {
-    true
+    // Voxa does not ship updates. The stored default stays off; the forced
+    // disable below also ignores a `true` left over from a Handy install.
+    false
 }
 
 fn default_show_whats_new_on_update() -> bool {
@@ -703,11 +733,12 @@ fn default_audio_feedback_volume() -> f32 {
 }
 
 fn default_sound_theme() -> SoundTheme {
-    SoundTheme::Marimba
+    // New installs. A store that already names a theme keeps that value.
+    SoundTheme::Voxa
 }
 
 fn default_theme() -> Theme {
-    Theme::System
+    Theme::Dark
 }
 
 fn default_post_process_enabled() -> bool {
@@ -1017,6 +1048,7 @@ pub fn get_default_settings() -> AppSettings {
         audio_feedback_volume: default_audio_feedback_volume(),
         sound_theme: default_sound_theme(),
         start_hidden: default_start_hidden(),
+        close_button: CloseButtonBehavior::Hide,
         autostart_enabled: default_autostart_enabled(),
         update_checks_enabled: default_update_checks_enabled(),
         show_whats_new_on_update: default_show_whats_new_on_update(),
@@ -1436,6 +1468,7 @@ fn linux_self_update_possible(kind: Option<BundleKind>, has_tool: impl Fn(&str) 
 }
 
 #[cfg(target_os = "linux")]
+#[allow(dead_code)]
 fn self_update_possible() -> bool {
     use std::os::unix::fs::PermissionsExt;
     use tauri::utils::config::BundleType;
@@ -1461,19 +1494,18 @@ fn self_update_possible() -> bool {
 }
 
 #[cfg(not(target_os = "linux"))]
+#[allow(dead_code)]
 fn self_update_possible() -> bool {
     true
 }
 
-/// Update checks are forced off (without touching the persisted setting) when
-/// `HANDY_DISABLE_UPDATER` is set — e.g. by the Nix package, since self-update
-/// can't work against an immutable /nix/store install — or when this build
-/// cannot install its own update (see `linux_self_update_possible`).
+/// Update checks are always off in Voxa. The built-in updater points at
+/// upstream Handy releases; installing one would replace this app. The
+/// persisted `update_checks_enabled` value is left alone.
+///
+/// `HANDY_DISABLE_UPDATER` still forces the same result for Nix builds.
 pub fn update_checks_forced_disabled() -> bool {
-    use std::sync::OnceLock;
-    static IS_UPDATER_DISABLED: OnceLock<bool> = OnceLock::new();
-    *IS_UPDATER_DISABLED
-        .get_or_init(|| utils::env_flag_enabled("HANDY_DISABLE_UPDATER") || !self_update_possible())
+    true
 }
 
 /// Effective updater state: the user's stored preference, overridden to `false`
@@ -1554,6 +1586,22 @@ mod tests {
         );
         assert_eq!(settings.hold_threshold_ms, default_hold_threshold_ms());
         assert!(!settings.audio_feedback);
+        assert!(settings.start_hidden);
+        assert_eq!(settings.close_button, CloseButtonBehavior::Hide);
+        assert_eq!(settings.sound_theme, SoundTheme::Voxa);
+        assert_eq!(SoundTheme::Voxa.to_start_path(), "resources/voxa_start.wav");
+        assert_eq!(SoundTheme::Voxa.to_stop_path(), "resources/voxa_stop.wav");
+        let custom: AppSettings =
+            serde_json::from_value(serde_json::json!({"sound_theme": "custom"}))
+                .expect("custom sound theme still loads");
+        assert_eq!(custom.sound_theme, SoundTheme::Custom);
+        let quit: AppSettings = serde_json::from_value(serde_json::json!({"close_button": "quit"}))
+            .expect("quit close button still loads");
+        assert_eq!(quit.close_button, CloseButtonBehavior::Quit);
+        let legacy: AppSettings =
+            serde_json::from_value(serde_json::json!({"close_button": "minimize"}))
+                .expect("the old minimize value still loads");
+        assert_eq!(legacy.close_button, CloseButtonBehavior::Hide);
         assert!(settings.filler_word_removal_enabled);
         // Bindings default to empty; the load path merges the real defaults in.
         assert!(settings.bindings.is_empty());

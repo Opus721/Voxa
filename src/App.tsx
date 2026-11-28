@@ -319,38 +319,32 @@ function App() {
     content = (
       <div
         dir={direction}
-        className="h-screen flex flex-col select-none cursor-default"
+        className="h-screen flex overflow-hidden bg-frame text-text font-ui select-none cursor-default"
       >
         <ErrorBoundary context="What's New">
           <WhatsNewGate />
         </ErrorBoundary>
-        {/* Main content area that takes remaining space */}
-        <div className="flex-1 flex overflow-hidden">
-          <Sidebar
-            activeSection={currentSection}
-            onSectionChange={setCurrentSection}
-          />
-          {/* Scrollable content area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div ref={settingsScrollRef} className="flex-1 overflow-y-auto">
-              {/* Models fills the window: its table scrolls, not the page. */}
-              <div
-                className={`flex flex-col items-center p-4 gap-4 ${currentSection === "models" ? "h-full" : ""}`}
-              >
-                <SecureInputWarning />
-                {renderSettingsContent(
-                  currentSection,
-                  setOnboardingPreview,
-                  runOnboarding,
-                  runModelMigration,
-                  setCurrentSection,
-                )}
-              </div>
+        <Sidebar
+          activeSection={currentSection}
+          onSectionChange={setCurrentSection}
+        />
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-panel">
+          <div ref={settingsScrollRef} className="flex-1 overflow-y-auto">
+            <div
+              className={`flex flex-col items-center px-8 py-7 gap-6 ${currentSection === "models" ? "h-full" : ""}`}
+            >
+              <SecureInputWarning />
+              {renderSettingsContent(
+                currentSection,
+                setOnboardingPreview,
+                runOnboarding,
+                runModelMigration,
+                setCurrentSection,
+              )}
             </div>
           </div>
+          <Footer onShowHistory={showHistory} />
         </div>
-        {/* Fixed footer at bottom */}
-        <Footer onShowHistory={showHistory} />
         <FileDropOverlay onDropped={showHistory} />
       </div>
     );

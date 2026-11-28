@@ -120,6 +120,8 @@ fn paste_via_clipboard(
     // Capture key injection errors so the original clipboard is restored before
     // propagating them to the caller.
     let paste_result = (|| -> Result<(), String> {
+        input::wait_for_modifiers_released()?;
+
         // Send paste key combo
         #[cfg(target_os = "linux")]
         let key_combo_sent = try_send_key_combo_linux(paste_method);
@@ -945,6 +947,7 @@ fn paste_as_configured(
             info!("PasteMethod::None selected - skipping paste action");
         }
         PasteMethod::Direct => {
+            input::wait_for_modifiers_released()?;
             paste_direct(
                 &text,
                 &app_handle,
@@ -960,6 +963,7 @@ fn paste_as_configured(
             // the legacy path untouched.
             #[cfg(any(target_os = "macos", target_os = "windows"))]
             if settings.reliable_paste {
+                input::wait_for_modifiers_released()?;
                 // Runs entirely on the main thread, as it requires.
                 let (text, app) = (text.clone(), app_handle.clone());
                 let (auto_submit, auto_submit_key, clipboard_handling) = (

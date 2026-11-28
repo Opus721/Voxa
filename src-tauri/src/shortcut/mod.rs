@@ -22,9 +22,9 @@ use tauri::{AppHandle, Emitter, Manager};
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 use crate::settings::APPLE_INTELLIGENCE_DEFAULT_MODEL_ID;
 use crate::settings::{
-    self, get_settings, AutoSubmitKey, ChineseScript, ClipboardHandling, KeyboardImplementation,
-    LLMPrompt, LanguageDetectionMode, OverlayPosition, OverlayStyle, PasteMethod,
-    ShortcutActivation, ShortcutBinding, SoundTheme, Theme, TypingTool, VadBackend,
+    self, get_settings, AutoSubmitKey, ChineseScript, ClipboardHandling, CloseButtonBehavior,
+    KeyboardImplementation, LLMPrompt, LanguageDetectionMode, OverlayPosition, OverlayStyle,
+    PasteMethod, ShortcutActivation, ShortcutBinding, SoundTheme, Theme, TypingTool, VadBackend,
     APPLE_INTELLIGENCE_PROVIDER_ID,
 };
 use crate::tray;
@@ -629,12 +629,13 @@ pub fn change_audio_feedback_volume_setting(app: AppHandle, volume: f32) -> Resu
 pub fn change_sound_theme_setting(app: AppHandle, theme: String) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     let parsed = match theme.as_str() {
+        "voxa" => SoundTheme::Voxa,
         "marimba" => SoundTheme::Marimba,
         "pop" => SoundTheme::Pop,
         "custom" => SoundTheme::Custom,
         other => {
-            warn!("Invalid sound theme '{}', defaulting to marimba", other);
-            SoundTheme::Marimba
+            warn!("Invalid sound theme '{}', defaulting to voxa", other);
+            SoundTheme::Voxa
         }
     };
     settings.sound_theme = parsed;
@@ -797,6 +798,29 @@ pub fn change_debug_mode_setting(app: AppHandle, enabled: bool) -> Result<(), St
         serde_json::json!({
             "setting": "debug_mode",
             "value": enabled
+        }),
+    );
+
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn change_close_button_setting(app: AppHandle, behavior: String) -> Result<(), String> {
+    let parsed = match behavior.as_str() {
+        "hide" | "minimize" => CloseButtonBehavior::Hide,
+        "quit" => CloseButtonBehavior::Quit,
+        other => return Err(format!("Unknown close button behavior: {other}")),
+    };
+    let mut settings = settings::get_settings(&app);
+    settings.close_button = parsed;
+    settings::write_settings(&app, settings);
+
+    let _ = app.emit(
+        "settings-changed",
+        serde_json::json!({
+            "setting": "close_button",
+            "value": behavior
         }),
     );
 

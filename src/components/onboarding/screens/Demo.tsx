@@ -219,17 +219,7 @@ const DemoLaptop: React.FC<{
           ref={screenRef}
           className={`demo-screen ${dimmed ? "is-dimmed" : ""}`}
         >
-          <DesktopBar
-            os={os}
-            size="demo"
-            state={
-              pill === "rec"
-                ? "recording"
-                : pill === "work"
-                  ? "transcribing"
-                  : "idle"
-            }
-          />
+          <DesktopBar os={os} size="demo" />
           <div
             className="demo-app"
             data-mode={mode}

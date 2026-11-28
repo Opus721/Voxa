@@ -14,8 +14,14 @@ import "@/i18n";
 // `data-theme` on its own document: last-known theme before render (shared
 // localStorage) to avoid a flash, reconcile with the persisted setting in case
 // the overlay booted first, then follow live changes.
-applyTheme(getStoredTheme());
-syncThemeFromSettings();
+const previewing = new URLSearchParams(window.location.search).has("preview");
+if (previewing) {
+  localStorage.setItem("handy.theme", "dark");
+}
+applyTheme(previewing ? "dark" : getStoredTheme());
+if (!previewing) {
+  syncThemeFromSettings();
+}
 listen<Theme>("theme-changed", (event) => applyTheme(event.payload));
 
 // The overlay floats over other apps, so a stray right-click must not open the

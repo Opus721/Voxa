@@ -167,34 +167,26 @@ fn init_gtk_layer_shell(overlay_window: &tauri::webview::WebviewWindow) -> bool 
     false
 }
 
-/// Forces a window to be topmost using Win32 API (Windows only)
-/// This is more reliable than Tauri's set_always_on_top which can be overridden
+/// Show the overlay without activating it or letting tao reapply
+/// WS_EX_APPWINDOW. Its generic visibility setter rebuilds GWL_EXSTYLE.
 #[cfg(target_os = "windows")]
-fn force_overlay_topmost(overlay_window: &tauri::webview::WebviewWindow) {
+fn show_windows_overlay(window: &tauri::WebviewWindow) -> Result<(), String> {
     use windows::Win32::UI::WindowsAndMessaging::{
-        SetWindowPos, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW,
+        GetWindowLongW, SetWindowLongW, SetWindowPos, GWL_EXSTYLE, HWND_TOPMOST, SWP_FRAMECHANGED,
+        SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW,
     };
 
-    // Clone because run_on_main_thread takes 'static
-    let overlay_clone = overlay_window.clone();
-
-    // Make sure the Win32 call happens on the UI thread
-    let _ = overlay_clone.clone().run_on_main_thread(move || {
-        if let Ok(hwnd) = overlay_clone.hwnd() {
-            unsafe {
-                // Force Z-order: make this window topmost without changing size/pos or stealing focus
-                let _ = SetWindowPos(
-                    hwnd,
-                    Some(HWND_TOPMOST),
-                    0,
-                    0,
-                    0,
-                    0,
-                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW,
-                );
-            }
+    let hwnd = window.hwnd().map_err(|error| error.to_string())?;
+    unsafe {
+        let style = GetWindowLongW(hwnd, GWL_EXSTYLE) as u32;
+        let overlay_style = (style & !WS_EX_APPWINDOW.0) | WS_EX_TOOLWINDOW.0;
+        let mut flags = SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW;
+        if style != overlay_style {
+            SetWindowLongW(hwnd, GWL_EXSTYLE, overlay_style as i32);
+            flags |= SWP_FRAMECHANGED;
         }
-    });
+        SetWindowPos(hwnd, Some(HWND_TOPMOST), 0, 0, 0, 0, flags).map_err(|error| error.to_string())
+    }
 }
 
 fn get_monitor_with_cursor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
@@ -605,12 +597,13 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
             let pos_calc_elapsed = pos_started.elapsed() - set_pos_elapsed;
 
             let show_started = std::time::Instant::now();
+            #[cfg(target_os = "windows")]
+            if let Err(error) = show_windows_overlay(&overlay_window) {
+                log::error!("Failed to show recording overlay: {error}");
+            }
+            #[cfg(not(target_os = "windows"))]
             let _ = overlay_window.show();
             let show_elapsed = show_started.elapsed();
-
-            // On Windows, aggressively re-assert "topmost" in the native Z-order after showing
-            #[cfg(target_os = "windows")]
-            force_overlay_topmost(&overlay_window);
 
             // Re-assert bounds after show(): the pre-show move crosses the DPI
             // boundary, and tao's WM_DPICHANGED reflow clobbers the first placement.
@@ -798,6 +791,21 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
                 log::debug!("Skipping stale overlay hide: a newer session is showing the overlay");
                 return;
             }
+            #[cfg(target_os = "windows")]
+            {
+                let app = window_clone.app_handle().clone();
+                let _ = app.run_on_main_thread(move || {
+                    use windows::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_HIDE};
+                    if OVERLAY_SHOW_GENERATION.load(Ordering::SeqCst) == scheduled_at {
+                        if let Ok(hwnd) = window_clone.hwnd() {
+                            unsafe {
+                                let _ = ShowWindow(hwnd, SW_HIDE);
+                            }
+                        }
+                    }
+                });
+            }
+            #[cfg(not(target_os = "windows"))]
             let _ = window_clone.hide();
         });
     }
