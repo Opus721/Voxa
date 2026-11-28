@@ -1,7 +1,15 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Cog, FlaskConical, History, Info, Sparkles, Cpu } from "lucide-react";
-import HandyHand from "./icons/HandyHand";
+import {
+  Cog,
+  FlaskConical,
+  History,
+  Info,
+  SlidersHorizontal,
+  Sparkles,
+  Cpu,
+} from "lucide-react";
+import { VoxaMark } from "./icons/VoxaMark";
 import { useSettings } from "../hooks/useSettings";
 import {
   GeneralSettings,
@@ -34,7 +42,7 @@ interface SectionConfig {
 export const SECTIONS_CONFIG = {
   general: {
     labelKey: "sidebar.general",
-    icon: HandyHand,
+    icon: SlidersHorizontal,
     component: GeneralSettings,
     enabled: () => true,
   },
@@ -98,7 +106,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <nav className="flex flex-col w-[220px] shrink-0 h-full bg-frame px-2 py-3">
       <div className="flex items-center gap-2 px-2 h-8 mb-3">
-        <HandyHand width={16} height={16} className="text-emphasis" />
+        <VoxaMark size={20} />
         <span className="text-[13px] font-semibold tracking-[-0.02em] text-emphasis">
           {t("app.name")}
         </span>

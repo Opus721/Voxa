@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Build the Voxa icon files from one 1024px raster.
+"""Build Voxa icons from the approved Bodoni mark. Requires Pillow, icnsutil and resvg-py.
 
 The master is design/voxa-mark-bodoni-bleed-2.png: the Libre Bodoni italic
 V, weight 600, medium bleed, white on #09090a. It matches a single
-render of src/assets/voxa-mark.svg at 1024. Every smaller file is a
+render of src/assets/voxa-mark.svg at 1024. Windows frames use the matching SVG directly. Other sizes use a
 LANCZOS downscale of that image (halved until the next power of two,
 then LANCZOS to the exact size). Nothing is redrawn per size.
 """
@@ -16,6 +16,7 @@ import struct
 from pathlib import Path
 
 import icnsutil
+import resvg_py
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,7 +32,8 @@ TILE = (9, 9, 10, 255)
 BLEED_SCALE = 1.54151
 BLEED_TX = -204.80
 BLEED_TY = 48.00
-ICO_SIZES = [16, 20, 24, 32, 40, 48, 64, 96, 128, 256]
+ICO_SIZES = [16, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 87, 96, 128, 256]
+WINDOWS_TRAY_SIZES = [16, 20, 24, 28, 32, 36, 40, 48, 56, 64]
 # A redrawn polygon at 32px is ~40 RMSE from a LANCZOS of the master.
 # Halving stays near 3. Anything above this means a size was repainted.
 LANCZOS_RMSE_LIMIT = 6.0
@@ -273,7 +275,16 @@ def main() -> None:
             image = image.resize((w, h), Image.Resampling.LANCZOS)
         save_png(path, image)
 
-    frames = {size: downscale(master, size, cache) for size in ICO_SIZES}
+    # Rasterize the same vector as the UI. Oversampling gives the thin diagonal
+    # fractional pixel coverage at the exact size Explorer will display.
+    vector = MASTER_PNG.with_suffix(".svg").read_text(encoding="utf-8")
+    frames = {}
+    for size in ICO_SIZES:
+        png = resvg_py.svg_to_bytes(svg_string=vector, width=size * 8, skip_system_fonts=True)
+        frame = Image.open(io.BytesIO(png)).convert("RGBA")
+        frames[size] = frame.resize((size, size), Image.Resampling.LANCZOS)
+    for size in WINDOWS_TRAY_SIZES:
+        save_png(RES / "windows-tray" / f"{size}.png", frames[size])
     assert_frames_match_lanczos(master, frames)
     write_ico(ICONS / "icon.ico", frames)
     write_icns(ICONS / "icon.icns", cache, master)
@@ -285,13 +296,13 @@ def main() -> None:
     for name in ("handy.png", "handy_warning.png", "recording.png", "transcribing.png"):
         save_png(RES / name, tray)
 
-    sheet = write_contact_sheet(master, cache)
+    sheet = write_contact_sheet(master, frames)
     save_png(ROOT / "design" / "voxa-icon-sizes.png", sheet)
 
     print("icons written")
 
 
-def write_contact_sheet(master: Image.Image, cache: dict[int, Image.Image]) -> Image.Image:
+def write_contact_sheet(master: Image.Image, frames: dict[int, Image.Image]) -> Image.Image:
     """Master beside each downscale, with 32px and 16px nearest-neighbor zooms."""
     sizes = ICO_SIZES
     zoom = 8
@@ -316,16 +327,16 @@ def write_contact_sheet(master: Image.Image, cache: dict[int, Image.Image]) -> I
         sheet.paste(shown, (x, y), shown)
         draw.text((x, y + cell + 4), label, fill=(255, 255, 255, 255))
 
-    place(downscale(master, 256, cache), 0, pad, "master")
+    place(master.resize((256, 256), Image.Resampling.LANCZOS), 0, pad, "master")
     for i, size in enumerate(sizes, start=1):
-        place(downscale(master, size, cache), i, pad, f"{size}px")
+        place(frames[size], i, pad, f"{size}px")
 
     def zoomed(source: Image.Image, size: int, x: int, y: int, label: str) -> None:
         big = source.resize((size * zoom, size * zoom), Image.Resampling.NEAREST)
         sheet.paste(big, (x, y), big)
         draw.text((x, y + size * zoom + 4), label, fill=(255, 255, 255, 255))
 
-    zoomed(downscale(master, 32, cache), 32, pad, zoom_row, "32px ×8")
+    zoomed(frames[32], 32, pad, zoom_row, "32px ×8")
     zoomed(
         master.resize((32, 32), Image.Resampling.LANCZOS),
         32,
@@ -334,7 +345,7 @@ def write_contact_sheet(master: Image.Image, cache: dict[int, Image.Image]) -> I
         "32px LANCZOS ×8",
     )
     y16 = zoom_row + 32 * zoom + label_h + pad
-    zoomed(downscale(master, 16, cache), 16, pad, y16, "16px ×8")
+    zoomed(frames[16], 16, pad, y16, "16px ×8")
     zoomed(
         master.resize((16, 16), Image.Resampling.LANCZOS),
         16,

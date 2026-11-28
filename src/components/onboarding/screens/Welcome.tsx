@@ -8,7 +8,6 @@ import {
   LanguageSearchField,
   useLanguagePicker,
 } from "../../shared/LanguagePicker";
-import HandyTextLogo from "../../icons/HandyTextLogo";
 import { OnboardingShell, ScreenHeader } from "../OnboardingShell";
 import { AppLanguageMenu } from "../AppLanguageMenu";
 import { useOnboardingStore } from "../onboardingStore";
@@ -93,9 +92,11 @@ export const Welcome: React.FC<WelcomeProps> = ({ progress, onContinue }) => {
       }
     >
       <div className="flex h-full min-h-0 flex-col items-center px-gutter pt-[6px] pb-[4px] text-center">
-        <div className="mb-[10px] inline-flex items-end gap-[8px] leading-none">
-          <Mascot size={54} animation={wave ? "wave" : null} />
-          <HandyTextLogo width={112} className="mb-[4px] block" />
+        <div className="mb-[10px] inline-flex items-center gap-2 leading-none">
+          <Mascot size={44} animation={wave ? "wave" : null} />
+          <span className="text-[20px] font-semibold tracking-[-0.02em] text-emphasis">
+            {t("app.name")}
+          </span>
         </div>
         <ScreenHeader
           title={t("onboarding.welcome.title")}

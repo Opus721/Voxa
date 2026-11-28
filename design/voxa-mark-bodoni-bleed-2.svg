@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <!-- Libre Bodoni Italic capital V, weight 600, placed so it crops off the left and bottom.
        Pablo Impallari and Rodrigo Fuenzalida, Impallari Type. SIL OFL 1.1.
-       Outlined; the font file is not in this repo. Not wired into the app. -->
+       Outlined; the font file is not in this repo. Shared Voxa application mark. -->
   <defs>
     <clipPath id="tile">
       <rect width="1024" height="1024" rx="225.3"/>
     </clipPath>
   </defs>
   <rect width="1024" height="1024" rx="225.3" fill="#09090a"/>
-  <g clip-path="url(#tile)" fill="#ffffff" transform="translate(-204.80 48.00) scale(1.54151)">
-    <path d="M58.7 766.0L190.0 539.7L570.3 20.0L608.0 20.0L67.0 766.0ZM37.3 766.0L79.0 10.0L228.7 10.0L189.0 535.7L193.0 535.7L65.0 766.0ZM0.0 28.3L0.0 0.0L302.3 0.0L302.3 28.3ZM461.7 28.3L461.7 0.0L679.7 0.0L679.7 28.3Z"/>
+  <g clip-path="url(#tile)" fill="#ffffff">
+    <path transform="translate(-204.80 48.00) scale(1.54151)" d="M58.7 766.0L190.0 539.7L570.3 20.0L608.0 20.0L67.0 766.0ZM37.3 766.0L79.0 10.0L228.7 10.0L189.0 535.7L193.0 535.7L65.0 766.0ZM0.0 28.3L0.0 0.0L302.3 0.0L302.3 28.3ZM461.7 28.3L461.7 0.0L679.7 0.0L679.7 28.3Z"/>
   </g>
 </svg>

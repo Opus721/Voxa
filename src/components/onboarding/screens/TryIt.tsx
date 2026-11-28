@@ -10,7 +10,7 @@ import { Button } from "../../ui/Button";
 import { TextLink } from "../../ui/TextLink";
 import { CapturedKeys, captureHintKey, Keycaps } from "../../shared/Keycaps";
 import { Mascot } from "../../shared/Mascot";
-import TrayIcon from "../../icons/TrayIcon";
+import { VoxaMark } from "../../icons/VoxaMark";
 import { DesktopBar } from "../DesktopBar";
 import { WindowBar } from "../WindowBar";
 import { OnboardingShell, ScreenSub, ScreenTitle } from "../OnboardingShell";
@@ -474,7 +474,7 @@ export const TryIt: React.FC<TryItProps> = ({
             onClick={() => start("five")}
             disabled={stage !== "try"}
           >
-            <TrayIcon state="idle" size={16} />
+            <VoxaMark size={16} />
             {t("onboarding.try.highFive")}
           </Button>
         ),
@@ -572,19 +572,7 @@ export const TryIt: React.FC<TryItProps> = ({
           className="try-screen"
           data-os={isMac ? "mac" : "win"}
         >
-          <DesktopBar
-            os={os}
-            size="try"
-            state={
-              e.phase === "listening"
-                ? "recording"
-                : e.phase === "typing"
-                  ? "transcribing"
-                  : "idle"
-            }
-            trayRef={tray}
-            caught={caught}
-          />
+          <DesktopBar os={os} size="try" trayRef={tray} caught={caught} />
           <div
             className="try-notes"
             // A click anywhere in the window puts the cursor in the note.

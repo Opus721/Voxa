@@ -1,6 +1,6 @@
 import React from "react";
 import type { OSType } from "@/lib/utils/keyboard";
-import TrayIcon from "../icons/TrayIcon";
+import { VoxaMark } from "../icons/VoxaMark";
 import "./desktopBar.css";
 
 // Placeholder menu widths per size.
@@ -25,18 +25,17 @@ const Tux = () => (
 export const DesktopBar: React.FC<{
   os: OSType;
   size: "demo" | "try";
-  state: React.ComponentProps<typeof TrayIcon>["state"];
   /** Try it's glove flies into this. */
   trayRef?: React.Ref<HTMLSpanElement>;
   caught?: boolean;
-}> = ({ os, size, state, trayRef, caught }) => {
+}> = ({ os, size, trayRef, caught }) => {
   const tray = (
     <span
       ref={trayRef}
       className="desktop-tray"
       data-caught={caught || undefined}
     >
-      <TrayIcon state={state} size={ICON_SIZE[size]} />
+      <VoxaMark size={ICON_SIZE[size]} />
     </span>
   );
   const clock = <span className="tabular-nums">9:41</span>;
